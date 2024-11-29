@@ -5,7 +5,7 @@
 # Ensure the script exits on error
 set -e
 
-TOOLCHAIN_PATH=$HOME/proton-clang/proton-clang-20210522/bin
+TOOLCHAIN_PATH=$HOME/Desktop/proton-clang/proton-clang-20210522/bin
 GIT_COMMIT_ID=$(git rev-parse --short=8 HEAD)
 TARGET_DEVICE=$1
 
@@ -115,52 +115,52 @@ local_version_date_str="-$(date +%Y%m%d)-${GIT_COMMIT_ID}-perf"
 
 sed -i "s/${local_version_str}/${local_version_date_str}/g" arch/arm64/configs/${TARGET_DEVICE}_defconfig
 
-# ------------- Building for AOSP -------------
+# # ------------- Building for AOSP -------------
 
-echo "Building for AOSP......"
-make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
+# echo "Building for AOSP......"
+# make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
 
-if [ $KSU_ENABLE -eq 1 ]; then
-    scripts/config --file out/.config -e KSU
-else
-    scripts/config --file out/.config -d KSU
-fi
+# if [ $KSU_ENABLE -eq 1 ]; then
+#     scripts/config --file out/.config -e KSU
+# else
+#     scripts/config --file out/.config -d KSU
+# fi
 
-make $MAKE_ARGS -j$(nproc)
-
-
-if [ -f "out/arch/arm64/boot/Image" ]; then
-    echo "The file [out/arch/arm64/boot/Image] exists. AOSP Build successfully."
-else
-    echo "The file [out/arch/arm64/boot/Image] does not exist. Seems AOSP build failed."
-    exit 1
-fi
-
-echo "Generating [out/arch/arm64/boot/dtb]......"
-find out/arch/arm64/boot/dts -name '*.dtb' -exec cat {} + >out/arch/arm64/boot/dtb
-
-rm -rf anykernel/kernels/
-
-mkdir -p anykernel/kernels/
-
-cp out/arch/arm64/boot/Image anykernel/kernels/
-cp out/arch/arm64/boot/dtb anykernel/kernels/
-
-cd anykernel 
-
-ZIP_FILENAME=Kernel_AOSP_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
-
-zip -r9 $ZIP_FILENAME ./* -x .git .gitignore out/ ./*.zip
-
-mv $ZIP_FILENAME ../
-
-cd ..
+# make $MAKE_ARGS -j$(nproc)
 
 
-echo "Build for AOSP finished."
+# if [ -f "out/arch/arm64/boot/Image" ]; then
+#     echo "The file [out/arch/arm64/boot/Image] exists. AOSP Build successfully."
+# else
+#     echo "The file [out/arch/arm64/boot/Image] does not exist. Seems AOSP build failed."
+#     exit 1
+# fi
 
-# ------------- End of Building for AOSP -------------
-#  If you don't need AOSP you can comment out the above block [Building for AOSP]
+# echo "Generating [out/arch/arm64/boot/dtb]......"
+# find out/arch/arm64/boot/dts -name '*.dtb' -exec cat {} + >out/arch/arm64/boot/dtb
+
+# rm -rf anykernel/kernels/
+
+# mkdir -p anykernel/kernels/
+
+# cp out/arch/arm64/boot/Image anykernel/kernels/
+# cp out/arch/arm64/boot/dtb anykernel/kernels/
+
+# cd anykernel 
+
+# ZIP_FILENAME=Kernel_AOSP_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
+
+# zip -r9 $ZIP_FILENAME ./* -x .git .gitignore out/ ./*.zip
+
+# mv $ZIP_FILENAME ../
+
+# cd ..
+
+
+# echo "Build for AOSP finished."
+
+# # ------------- End of Building for AOSP -------------
+# #  If you don't need AOSP you can comment out the above block [Building for AOSP]
 
 
 # ------------- Building for MIUI -------------
