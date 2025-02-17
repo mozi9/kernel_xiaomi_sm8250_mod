@@ -130,11 +130,16 @@ Release里的编译好的内核成品由`android14-lineage21-mod`分支编译，
     bash build.sh lmi
     ````
 
-    For example, build for umi (Mi 10) with KernelSU:
+    For example, build for umi (Mi 10) with [KernelSU](https://github.com/tiann/KernelSU):
     ```
     bash build.sh umi ksu
     ```
 
+    For example, build for umi (Mi 10) with [RKSU](https://github.com/rsuntk/KernelSU):
+    
+    ```she
+    bash build.sh umi rksu
+    ```
+    
     And also, here is a `buildall.sh` can build for all supported models at once.
-
 

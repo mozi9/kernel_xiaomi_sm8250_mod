@@ -86,6 +86,9 @@ KSU_ZIP_STR=NoKernelSU
 if [ "$2" == "ksu" ]; then
     KSU_ENABLE=1
     KSU_ZIP_STR=KernelSU
+elif [ "$2" == "rksu" ]; then
+    KSU_ENABLE=2
+    KSU_ZIP_STR=RKSU
 else
     KSU_ENABLE=0
 fi
@@ -96,6 +99,9 @@ echo "TARGET_DEVICE: $TARGET_DEVICE"
 if [ $KSU_ENABLE -eq 1 ]; then
     echo "KSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
+elif [ $KSU_ENABLE -eq 2 ]; then
+    echo "RKSU is enabled"
+    curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s main
 else
     echo "KSU is disabled"
 fi
@@ -231,6 +237,8 @@ sed -i 's/\/\/39 01 00 00 11 00 03 51 03 FF/39 01 00 00 11 00 03 51 03 FF/g' ${d
 make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
 
 if [ $KSU_ENABLE -eq 1 ]; then
+    scripts/config --file out/.config -e KSU
+elif [ $KSU_ENABLE -eq 2 ]; then
     scripts/config --file out/.config -e KSU
 else
     scripts/config --file out/.config -d KSU
