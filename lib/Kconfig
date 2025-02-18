@@ -287,7 +287,6 @@ config LZ4KD_DECOMPRESS
 config LZ4K_DECOMPRESS
 	tristate
 
-
 config ZSTD_COMPRESS
 	select XXHASH
 	tristate
