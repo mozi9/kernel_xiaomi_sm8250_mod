@@ -1,0 +1,27 @@
+name: Build Kernel (Test)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: clone repo
+        run: git clone https://github.com/Prslc/kernel_xiaomi_sm8250_mod.git --depth=1
+
+      - name: download Depend
+        run: sudo apt install build-essential git curl wget bison flex zip bc cpio libssl-dev
+
+      - name: Download the compilation toolchain
+        run: |
+            mkdir proton-clang
+            cd proton-clang
+            wget https://github.com/kdrag0n/proton-clang/archive/refs/tags/20210522.zip
+            unzip 20210522.zip
+            cd ..
+            ls
+      
