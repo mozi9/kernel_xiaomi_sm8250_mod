@@ -81,6 +81,7 @@
 #endif
 
 #include <uapi/linux/android/binder.h>
+#include <linux/rekernel.h>
 #include <uapi/linux/android/binderfs.h>
 #include <uapi/linux/sched/types.h>
 
@@ -1052,9 +1053,7 @@ static bool binder_has_work(struct binder_thread *thread, bool do_proc_work)
 static bool binder_available_for_proc_work_ilocked(struct binder_thread *thread)
 {
 	return !thread->transaction_stack &&
-		binder_worklist_empty_ilocked(&thread->todo) &&
-		(thread->looper & (BINDER_LOOPER_STATE_ENTERED |
-				   BINDER_LOOPER_STATE_REGISTERED));
+		binder_worklist_empty_ilocked(&thread->todo);
 }
 
 static void binder_wakeup_poll_threads_ilocked(struct binder_proc *proc,
@@ -3093,7 +3092,6 @@ static int start_rekernel_server(void) {
   }
   return 0;
 }
-
 static void binder_transaction(struct binder_proc *proc,
 			       struct binder_thread *thread,
 			       struct binder_transaction_data *tr, int reply,
@@ -3197,6 +3195,18 @@ static void binder_transaction(struct binder_proc *proc,
 		target_proc = target_thread->proc;
 		target_proc->tmp_ref++;
 		binder_inner_proc_unlock(target_thread->proc);
+		if (start_rekernel_server() == 0) {
+			if (target_proc
+            	&& (NULL != target_proc->tsk)
+            	&& (NULL != proc->tsk)
+            	&& (task_uid(target_proc->tsk).val <= REKERNEL_MAX_SYSTEM_UID)
+            	&& (proc->pid != target_proc->pid)
+            	&& line_is_frozen(target_proc->tsk)) {
+     				char binder_kmsg[REKERNEL_PACKET_SIZE];
+            		snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=reply,oneway=0,from_pid=%d,from=%d,target_pid=%d,target=%d;", proc->pid, task_uid(proc->tsk).val, target_proc->pid, task_uid(target_proc->tsk).val);
+         			send_netlink_message(binder_kmsg, strlen(binder_kmsg));
+   			}
+		}
 
 #ifdef CONFIG_MILLET
 		if (target_proc

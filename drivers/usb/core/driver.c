@@ -947,6 +947,14 @@ int usb_register_driver(struct usb_driver *new_driver, struct module *owner,
 {
 	int retval = 0;
 
+#if IS_ENABLED(CONFIG_USB_HUB_DISABLE)
+
+	if(strcmp(new_driver->name, "hub") == 0){
+		return retval;
+	}
+	
+#endif
+
 	if (usb_disabled())
 		return -ENODEV;
 
