@@ -5,6 +5,9 @@
 # Ensure the script exits on error
 set -e
 
+start_time=$(date +%s)
+start_current_time=$(date '+%T')
+
 TOOLCHAIN_PATH=$HOME/proton-clang/proton-clang-20210522/bin
 GIT_COMMIT_ID=$(git rev-parse --short=8 HEAD)
 TARGET_DEVICE=$1
@@ -319,3 +322,13 @@ mv $ZIP_FILENAME ../
 cd ..
 
 echo "Done. The flashable zip is: [./$ZIP_FILENAME]"
+
+end_time=$(date +%s)
+end_current_time=$(date '+%T')
+echo "Start compilation time: $start_current_time"
+echo "End compilation time: $end_current_time"
+
+duration=$((end_time - start_time))
+minutes=$((duration / 60))
+seconds=$((duration % 60))
+echo "Total time spent: ${minutes}m:${seconds}s"
