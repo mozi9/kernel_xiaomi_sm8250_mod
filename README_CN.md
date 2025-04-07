@@ -46,74 +46,74 @@ Release里的编译好的内核成品由`android14-lineage21-mod`分支编译，
 # 如何编译
 
 1. 准备基础编译环境
-
-你需要具备常用的基础工具链，例如 `git`、`make`、`curl`、`bison`、`flex`、`zip` 等，以及其他一些必要的软件包。
-
-在 Debian/Ubuntu 系统中，你可以执行以下命令安装：
-
-```bash
-sudo apt install build-essential git curl wget bison flex zip bc cpio libssl-dev ccache
-```
-
-另外，还需要安装 `python`（仅有 `python3` 不够），你可以安装 `python-is-python3` 来解决：
-
-```bash
-sudo apt install python-is-python3
-```
-
-在 RHEL/RPM 系列系统中，你可以执行：
-
-```bash
-sudo yum groupinstall 'Development Tools'
-sudo yum install wget bc openssl-devel ccache
-```
-
-注意：`build.sh` 脚本中启用了 `ccache` 以加快编译速度。`CCACHE_DIR` 已设置为 `$HOME/.cache/ccache_mikernel`，如有需要你可以修改或删除这个设置。
-
+   
+    你需要具备常用的基础工具链，例如 `git`、`make`、`curl`、`bison`、`flex`、`zip` 等，以及其他一些必要的软件包。
+    
+    在 Debian/Ubuntu 系统中，你可以执行以下命令安装：
+    
+    ```bash
+    sudo apt install build-essential git curl wget bison flex zip bc cpio libssl-dev ccache
+    ```
+    
+    另外，还需要安装 `python`（仅有 `python3` 不够），你可以安装 `python-is-python3` 来解决：
+    
+    ```bash
+    sudo apt install python-is-python3
+    ```
+    
+    在 RHEL/RPM 系列系统中，你可以执行：
+    
+    ```bash
+    sudo yum groupinstall 'Development Tools'
+    sudo yum install wget bc openssl-devel ccache
+    ```
+    
+    注意：`build.sh` 脚本中启用了 `ccache` 以加快编译速度。`CCACHE_DIR` 已设置为 `$HOME/.cache/ccache_mikernel`，如有需要你可以修改或删除这个设置。
+    
 2. 下载 [proton-clang] 编译工具链
-
-你需要具备 `aarch64-linux-gnu`、`arm-linux-gnueabi`、`clang` 等工具。[Proton Clang](https://github.com/kdrag0n/proton-clang/) 是一个很好的预编译 Clang 交叉编译工具链。
-
-默认的工具链路径是 `$HOME/proton-clang/proton-clang-20210522/bin`，这个路径在 `build.sh` 中设置好了。如果你放在其他位置，请修改 `build.sh` 中的 `TOOLCHAIN_PATH`。
-
-```bash
-mkdir proton-clang
-cd proton-clang
-wget https://github.com/kdrag0n/proton-clang/archive/refs/tags/20210522.zip
-unzip 20210522.zip
-cd ..
-```
-
+   
+    你需要具备 `aarch64-linux-gnu`、`arm-linux-gnueabi`、`clang` 等工具。[Proton Clang](https://github.com/kdrag0n/proton-clang/) 是一个很好的预编译 Clang 交叉编译工具链。
+    
+    默认的工具链路径是 `$HOME/proton-clang/proton-clang-20210522/bin`，这个路径在 `build.sh` 中设置好了。如果你放在其他位置，请修改 `build.sh` 中的 `TOOLCHAIN_PATH`。
+    
+    ```bash
+    mkdir proton-clang
+    cd proton-clang
+    wget https://github.com/kdrag0n/proton-clang/archive/refs/tags/20210522.zip
+    unzip 20210522.zip
+    cd ..
+    ```
+    
 3. 编译
-
-不带 KernelSU 的编译命令：
-
-```bash
-bash build.sh 目标设备代号
-```
-
-带 KernelSU 的编译命令：
-
-```bash
-bash build.sh 目标设备代号 ksu
-```
-
-例如，为 lmi（Redmi K30 Pro / POCO F2 Pro）编译，不带 KernelSU：
-
-```bash
-bash build.sh lmi
-```
-
-例如，为 umi（小米10）编译，使用 [KernelSU](https://github.com/tiann/KernelSU)：
-
-```bash
-bash build.sh umi ksu
-```
-
-例如，为 umi（小米10）编译，使用 [RKSU](https://github.com/rsuntk/KernelSU)：
-
-```bash
-bash build.sh umi rksu
-```
-
-此外，还有一个 `buildall.sh` 脚本，可以一次性为所有支持的设备进行编译。
+   
+    不带 KernelSU 的编译命令：
+    
+    ```bash
+    bash build.sh TARGET_DEVICE
+    ```
+    
+    带 KernelSU 的编译命令：
+    
+    ```bash
+    bash build.sh TARGET_DEVICE ksu
+    ```
+    
+    例如，为 lmi（Redmi K30 Pro / POCO F2 Pro）编译，不带 KernelSU：
+    
+    ```bash
+    bash build.sh lmi
+    ```
+    
+    例如，为 umi（小米10）编译，使用 [KernelSU](https://github.com/tiann/KernelSU)：
+    
+    ```bash
+    bash build.sh umi ksu
+    ```
+    
+    例如，为 umi（小米10）编译，使用 [RKSU](https://github.com/rsuntk/KernelSU)：
+    
+    ```bash
+    bash build.sh umi rksu
+    ```
+    
+    此外，还有一个 `buildall.sh` 脚本，可以一次性为所有支持的设备进行编译。
