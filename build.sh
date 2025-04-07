@@ -309,9 +309,19 @@ Build_MIUI(){
     # Restore local version string
     sed -i "s/${local_version_date_str}/${local_version_str}/g" arch/arm64/configs/${TARGET_DEVICE}_defconfig
 
-    # ------------- End of Building for MIUI -------------
-}
 
+    cd anykernel 
+
+    ZIP_FILENAME=Kernel_MIUI_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
+
+    zip -r9 $ZIP_FILENAME ./* -x .git .gitignore out/ ./*.zip
+
+    mv $ZIP_FILENAME ../
+
+    cd ..
+    # ------------- End of Building for MIUI -------------
+
+}
 
 if [ $3 == "aosp" ];then
     Build_AOSP
@@ -321,17 +331,7 @@ else
     Build_AOSP
     Build_MIUI
 fi
-
-cd anykernel 
-
-ZIP_FILENAME=Kernel_MIUI_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
-
-zip -r9 $ZIP_FILENAME ./* -x .git .gitignore out/ ./*.zip
-
-mv $ZIP_FILENAME ../
-
-cd ..
-
+    
 echo "Done. The flashable zip is: [./$ZIP_FILENAME]"
 
 end_time=$(date +%s)
