@@ -1,0 +1,114 @@
+name: Build Kernel
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_device:
+        description: 'Target device'
+        required: true
+        default: 'munch'
+        type: choice
+        options:
+          - 'munch'
+          - 'lmi'
+          - 'umi'
+          - 'psyche'
+          - 'thyme'
+          - 'cmi'
+          - 'cas'
+          - 'apollo'
+          - 'alioth'
+          - 'elish'
+          - 'enuma'
+          - 'dagu'
+          - 'pipa'
+
+      system_version:
+        description: 'Compiled system'
+        required: true
+        type: choice
+        default: 'aosp'
+        options:
+          - 'aosp'
+          - 'miui'
+          - 'all'
+    
+      enable_ksu_patch:
+        description: 'Enable KernelSU'
+        required: false
+        default: false
+        type: boolean
+
+      kernelsu_version:
+        description: 'KernelSU Version'
+        required: false
+        type: choice
+        default: 'ksu'
+        options:
+          - 'ksu'
+          - 'rksu'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Kernel Source
+        run: |
+          mkdir -p repo
+          cd repo
+          git clone https://github.com/Prslc/kernel_xiaomi_sm8250_mod.git --depth=1
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential git curl wget bison flex zip bc \
+            cpio libssl-dev libncurses-dev gcc \
+            python3 python3-pip tree
+            
+      - name: Download Proton Clang Toolchain
+        run: |
+          mkdir -p proton-clang
+          cd proton-clang
+          wget https://github.com/kdrag0n/proton-clang/archive/refs/tags/20210522.zip
+          unzip 20210522.zip
+          rm proton-clang-20210522/bin/ld
+          
+      - name: Build Kernel
+        run: |
+          cd repo/kernel_xiaomi_sm8250_mod
+          sed -i 's|TOOLCHAIN_PATH=\$HOME/proton-clang/proton-clang-20210522/bin|TOOLCHAIN_PATH=/home/runner/work/kernel_xiaomi_sm8250_mod/kernel_xiaomi_sm8250_mod/proton-clang/proton-clang-20210522/bin|' build.sh
+
+          DEVICE="${{ github.event.inputs.target_device }}"
+          SYSTEM="${{ github.event.inputs.system_version }}"
+          KSU_VERSION="${{ github.event.inputs.kernelsu_version }}"
+
+          if [ "${{ github.event.inputs.enable_ksu_patch }}" == "true" ]; then
+              echo "KernelSU Enabled: $KSU_VERSION"
+          else
+              echo "KernelSU Disabled"
+              KSU_VERSION="none"
+          fi
+
+          bash build.sh "$DEVICE" "$KSU_VERSION" "$SYSTEM"
+
+
+      - name: Set Kernel Path
+        run: |
+          cd repo/kernel_xiaomi_sm8250_mod
+
+          if [[ "${{ github.event.inputs.system_version }}" == "aosp" || "${{ github.event.inputs.system_version }}" == "miui" ]]; then
+              KernelPath=$(ls Kernel_* 2>/dev/null || true)
+              echo "KernelPath=$(pwd)/$KernelPath" >> $GITHUB_ENV
+          else
+              tar -czvf Kernel_All.tar.gz Kernel_*
+              KernelPath=$(pwd)/Kernel_All.tar.gz
+              echo "KernelPath=$KernelPath" >> $GITHUB_ENV
+          fi
+      
+      - name: Upload Kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kernel
+          path: ${{ env.KernelPath }}
