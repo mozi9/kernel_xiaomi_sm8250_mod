@@ -72,6 +72,7 @@
  #include <linux/security.h>
  #include <linux/spinlock.h>
  #include <linux/ratelimit.h>
+ #include <linux/rekernel.h>
  
  #ifdef CONFIG_MILLET
  #include <linux/millet.h>
@@ -81,6 +82,7 @@
  #endif
  
  #include <uapi/linux/android/binder.h>
+#include <linux/rekernel.h>
  #include <uapi/linux/android/binderfs.h>
  #include <uapi/linux/sched/types.h>
  
@@ -3035,7 +3037,84 @@
  #endif
  
  
- static void binder_transaction(struct binder_proc *proc,
+ static inline bool line_is_frozen(struct task_struct *task)
+{
+	return (freezing(task) || frozen(task) || cgroup_task_freeze(task) || cgroup_task_frozen(task));
+}
+
+static int rekernel_unit_show(struct seq_file *m, void *v)
+{
+	seq_printf(m, "%d\n", rekernel_netlink_unit);
+	return 0;
+}
+
+static int rekernel_unit_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, rekernel_unit_show, NULL);
+}
+
+static const struct file_operations rekernel_unit_fops = {
+	.open   = rekernel_unit_open,
+	.read   = seq_read,
+	.llseek   = seq_lseek,
+	.release   = single_release,
+	.owner   = THIS_MODULE,
+};
+
+static int send_netlink_message(char *msg, uint16_t len) {
+    struct sk_buff *skbuffer;
+    struct nlmsghdr *nlhdr;
+
+    skbuffer = nlmsg_new(len, GFP_ATOMIC);
+    if (!skbuffer) {
+        printk("netlink alloc failure.\n");
+        return -1;
+    }
+
+    nlhdr = nlmsg_put(skbuffer, 0, 0, rekernel_netlink_unit, len, 0);
+    if (!nlhdr) {
+        printk("nlmsg_put failaure.\n");
+        nlmsg_free(skbuffer);
+        return -1;
+    }
+
+    memcpy(nlmsg_data(nlhdr), msg, len);
+    return netlink_unicast(rekernel_netlink, skbuffer, REKERNEL_USER_PORT, MSG_DONTWAIT);
+}
+
+static struct proc_dir_entry *rekernel_dir, *rekernel_unit_entry;
+
+static int start_rekernel_server(void) {
+  extern struct net init_net;
+  struct netlink_kernel_cfg rekernel_cfg = { 
+    .input = NULL,
+  };
+  if (rekernel_netlink != NULL)
+    return 0;
+  for (rekernel_netlink_unit = NETLINK_REKERNEL_MIN; rekernel_netlink_unit < NETLINK_REKERNEL_MAX; rekernel_netlink_unit++) {
+    rekernel_netlink = (struct sock *)netlink_kernel_create(&init_net, rekernel_netlink_unit, &rekernel_cfg);
+    if (rekernel_netlink != NULL)
+      break;
+  }
+  printk("Created Re:Kernel server! NETLINK UNIT: %d\n", rekernel_netlink_unit);
+  if (rekernel_netlink == NULL) {
+    printk("Failed to create Re:Kernel server!\n");
+    return -1;
+  }
+  rekernel_dir = proc_mkdir("rekernel", NULL);
+  if (!rekernel_dir)
+      printk("create /proc/rekernel failed!\n");
+  else {
+      char buff[32];
+      sprintf(buff, "%d", rekernel_netlink_unit);
+      rekernel_unit_entry = proc_create(buff, 0644, rekernel_dir, &rekernel_unit_fops);
+      if (!rekernel_unit_entry)
+          printk("create rekernel unit failed!\n");
+  }
+  return 0;
+}
+
+static void binder_transaction(struct binder_proc *proc,
 					struct binder_thread *thread,
 					struct binder_transaction_data *tr, int reply,
 					binder_size_t extra_buffers_size)
@@ -3126,6 +3205,18 @@
 		 target_proc = target_thread->proc;
 		 target_proc->tmp_ref++;
 		 binder_inner_proc_unlock(target_thread->proc);
+		if (start_rekernel_server() == 0) {
+			if (target_proc
+            	&& (NULL != target_proc->tsk)
+            	&& (NULL != proc->tsk)
+            	&& (task_uid(target_proc->tsk).val <= REKERNEL_MAX_SYSTEM_UID)
+            	&& (proc->pid != target_proc->pid)
+            	&& line_is_frozen(target_proc->tsk)) {
+     				char binder_kmsg[REKERNEL_PACKET_SIZE];
+            		snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=reply,oneway=0,from_pid=%d,from=%d,target_pid=%d,target=%d;", proc->pid, task_uid(proc->tsk).val, target_proc->pid, task_uid(target_proc->tsk).val);
+         			send_netlink_message(binder_kmsg, strlen(binder_kmsg));
+   			}
+		}
 		 
  #ifdef CONFIG_MILLET
 		 if (target_proc
@@ -3195,6 +3286,18 @@
 			 goto err_dead_binder;
 		 }
 		 e->to_node = target_node->debug_id;
+		if (start_rekernel_server() == 0) {
+			if (target_proc
+            	&& (NULL != target_proc->tsk)
+            	&& (NULL != proc->tsk)
+            	&& (task_uid(target_proc->tsk).val > REKERNEL_MIN_USERAPP_UID)
+            	&& (proc->pid != target_proc->pid)
+            	&& line_is_frozen(target_proc->tsk)) {
+     				char binder_kmsg[REKERNEL_PACKET_SIZE];
+            		snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=transaction,oneway=%d,from_pid=%d,from=%d,target_pid=%d,target=%d;",  tr->flags & TF_ONE_WAY, proc->pid, task_uid(proc->tsk).val, target_proc->pid, task_uid(target_proc->tsk).val);
+         			send_netlink_message(binder_kmsg, strlen(binder_kmsg));
+   			}
+		}
  #ifdef CONFIG_MILLET
 		 if (target_proc
 			 && target_proc->tsk
