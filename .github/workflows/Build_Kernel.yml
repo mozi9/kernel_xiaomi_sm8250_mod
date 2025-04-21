@@ -74,13 +74,6 @@ jobs:
           SYSTEM="${{ github.event.inputs.system_version }}"
           KSU_VERSION="${{ github.event.inputs.kernelsu_version }}"
 
-          if [ "$KSU_VERSION" != "noksu" ]; then
-              echo "KernelSU Enabled: $KSU_VERSION"
-          else
-              echo "KernelSU Disabled"
-              KSU_VERSION="noksu"
-          fi
-
           bash build.sh "$DEVICE" "$KSU_VERSION" "$SYSTEM"
 
 
