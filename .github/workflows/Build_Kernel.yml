@@ -86,7 +86,6 @@ jobs:
 
       - name: Set Kernel Path
         run: |
-          cd repo/kernel_xiaomi_sm8250_mod
 
           if [[ "${{ github.event.inputs.system_version }}" == "aosp" || "${{ github.event.inputs.system_version }}" == "miui" ]]; then
               KernelPath=$(ls Kernel_* 2>/dev/null || true)
