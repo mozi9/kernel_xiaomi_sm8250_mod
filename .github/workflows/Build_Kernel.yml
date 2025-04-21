@@ -51,9 +51,6 @@ jobs:
     steps:
       - name: Clone Kernel Source
         uses: actions/checkout@v4
-        with: 
-          fetch-depth: 1
-          lfs: false
 
       - name: Cache APT packages
         uses: actions/cache@v3
