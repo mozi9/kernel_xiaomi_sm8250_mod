@@ -84,34 +84,24 @@ echo "[clang --version]:"
 clang --version
 
 
-
-KSU_ZIP_STR=NoKernelSU
-if [ "$2" == "ksu" ]; then
-    KSU_ENABLE=1
-    KSU_ZIP_STR=KernelSU
-elif [ "$2" == "rksu" ]; then
-    KSU_ENABLE=2
-    KSU_ZIP_STR=RKSU
-elif [ "$2" == "sukisu" ]; then
-    KSU_ENABLE=3
-    KSU_ZIP_STR=SukiSU
-else
-    KSU_ENABLE=0
-fi
-
-
 echo "TARGET_DEVICE: $TARGET_DEVICE"
 
-if [ $KSU_ENABLE -eq 1 ]; then
+[[ "$2" == "ksu" || "$2" == "rksu" || "$2" == "suikisu" ]] && KSU_ENABLE=1 || KSU_ENABLE=0
+
+if [ "$2" == "ksu" ]; then
+    KSU_ZIP_STR=KernelSU
     echo "KSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
-elif [ $KSU_ENABLE -eq 2 ]; then
+elif [ "$2" == "rksu" ]; then
+    KSU_ZIP_STR=RKSU
     echo "RKSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s main
-elif [ $KSU_ENABLE -eq 3 ]; then
-    echo "SukiSU"
+elif [ "$2" == "sukisu" ]; then
+    KSU_ZIP_STR=SukiSU
+    echo "SukiSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s main
 else
+    KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
 fi
 
@@ -249,10 +239,6 @@ Build_MIUI(){
 
     if [ $KSU_ENABLE -eq 1 ]; then
         scripts/config --file out/.config -e KSU
-    elif [ $KSU_ENABLE -eq 2 ]; then
-        scripts/config --file out/.config -e KSU
-    elif [ $KSU_ENABLE -eq 3 ]; then
-        scripts/config --file out/.config -e KSU
     else
         scripts/config --file out/.config -d KSU
     fi
@@ -344,10 +330,8 @@ echo "Done. The flashable zip is: [./$ZIP_FILENAME]"
 
 end_time=$(date +%s)
 end_current_time=$(date '+%T')
-echo "Start compilation time: $start_current_time"
-echo "End compilation time: $end_current_time"
 
 duration=$((end_time - start_time))
 minutes=$((duration / 60))
 seconds=$((duration % 60))
-echo "Total time spent: ${minutes}m:${seconds}s"
+echo "Total time: ${minutes}m:${seconds}s"
