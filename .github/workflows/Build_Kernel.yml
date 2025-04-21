@@ -52,16 +52,6 @@ jobs:
       - name: Clone Kernel Source
         uses: actions/checkout@v4
 
-      - name: Cache APT packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            /var/cache/apt/archives
-            /var/lib/apt/lists
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/build_kernel.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-
-
       - name: Install Dependencies
         run: |
           sudo apt-get update -y -qq
