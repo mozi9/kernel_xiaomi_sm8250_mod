@@ -82,9 +82,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ccache-${{ github.event.inputs.target_device }}-
 
-      - name: Show ccache stats
-        run: ccache -s
-
       - name: Build Kernel
         run: |
           sed -i 's|TOOLCHAIN_PATH=\$HOME/proton-clang/proton-clang-20210522/bin|TOOLCHAIN_PATH=$(pwd)/proton-clang-20210522/bin|' build.sh
