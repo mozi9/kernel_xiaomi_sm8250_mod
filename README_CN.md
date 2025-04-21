@@ -116,4 +116,10 @@ Release里的编译好的内核成品由`android14-lineage22-mod`分支编译，
     bash build.sh umi rksu
     ```
     
+    例如，为 umi（小米10）编译，使用 [SukiSU](https://github.com/ShirkNeko/KernelSU):
+    
+    ```bash
+    bash build.sh umi sukisu
+    ```
+    
     此外，还有一个 `buildall.sh` 脚本，可以一次性为所有支持的设备进行编译。

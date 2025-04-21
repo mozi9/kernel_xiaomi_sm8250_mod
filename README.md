@@ -72,30 +72,36 @@ Other Features/Improvement of this Kernel:
 3. Build
 
     Build without KernelSU: 
-    ```
+    ```bash
     bash build.sh TARGET_DEVICE
     ```
     
     Build with KernelSU:
-    ```
+    ```bash
     bash build.sh TARGET_DEVICE ksu
     ```
 
     For example, build for lmi (Redmi K30 Pro/POCO F2 Pro) without KernelSU:
-    ```
+    ```bash
     bash build.sh lmi
     ````
 
     For example, build for umi (Mi 10) with [KernelSU](https://github.com/tiann/KernelSU):
-    ```
+    ```bash
     bash build.sh umi ksu
     ```
 
     For example, build for umi (Mi 10) with [RKSU](https://github.com/rsuntk/KernelSU):
     
-    ```she
+    ```bash
     bash build.sh umi rksu
     ```
     
+    For example, build for umi (Mi 10) with [SukiSU](https://github.com/ShirkNeko/KernelSU):
+    
+    ```bash
+    bash build.sh umi sukisu
+    ```
+
     And also, here is a `buildall.sh` can build for all supported models at once.
 

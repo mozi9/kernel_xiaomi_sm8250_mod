@@ -92,6 +92,9 @@ if [ "$2" == "ksu" ]; then
 elif [ "$2" == "rksu" ]; then
     KSU_ENABLE=2
     KSU_ZIP_STR=RKSU
+elif [ "$2" == "sukisu" ]; then
+    KSU_ENABLE=3
+    KSU_ZIP_STR=SukiSU
 else
     KSU_ENABLE=0
 fi
@@ -105,6 +108,9 @@ if [ $KSU_ENABLE -eq 1 ]; then
 elif [ $KSU_ENABLE -eq 2 ]; then
     echo "RKSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s main
+elif [ $KSU_ENABLE -eq 3 ]; then
+    echo "SukiSU"
+    curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s main
 else
     echo "KSU is disabled"
 fi
@@ -244,6 +250,8 @@ Build_MIUI(){
     if [ $KSU_ENABLE -eq 1 ]; then
         scripts/config --file out/.config -e KSU
     elif [ $KSU_ENABLE -eq 2 ]; then
+        scripts/config --file out/.config -e KSU
+    elif [ $KSU_ENABLE -eq 3 ]; then
         scripts/config --file out/.config -e KSU
     else
         scripts/config --file out/.config -d KSU

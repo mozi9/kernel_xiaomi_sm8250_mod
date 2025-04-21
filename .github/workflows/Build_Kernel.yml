@@ -47,6 +47,7 @@ on:
         options:
           - 'ksu'
           - 'rksu'
+          - 'sukisu'
 
 jobs:
   build:
