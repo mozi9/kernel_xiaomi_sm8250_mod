@@ -86,7 +86,7 @@ clang --version
 
 echo "TARGET_DEVICE: $TARGET_DEVICE"
 
-[[ "$2" == "ksu" || "$2" == "rksu" || "$2" == "suikisu" ]] && KSU_ENABLE=1 || KSU_ENABLE=0
+[[ "$2" == "ksu" || "$2" == "rksu" || "$2" == "sukisu" ]] && KSU_ENABLE=1 || KSU_ENABLE=0
 
 if [ "$2" == "ksu" ]; then
     KSU_ZIP_STR=KernelSU
