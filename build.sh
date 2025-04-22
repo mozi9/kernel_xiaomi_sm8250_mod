@@ -99,7 +99,7 @@ elif [ "$2" == "rksu" ]; then
 elif [ "$2" == "sukisu" ]; then
     KSU_ZIP_STR=SukiSU
     echo "SukiSU is enabled"
-    curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s main
+    curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s dev
 else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
