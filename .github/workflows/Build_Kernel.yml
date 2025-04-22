@@ -24,7 +24,7 @@ on:
           - 'pipa'
 
       system_version:
-        description: 'Compiled system'
+        description: 'Target System'
         required: true
         type: choice
         default: 'aosp'
@@ -43,6 +43,11 @@ on:
           - 'rksu'
           - 'sukisu'
           - 'noksu'
+      
+      Enable_SuSFS:
+        description: 'Enable_SuSFS'
+        required: false
+        type: boolean
 
 jobs:
   build:
@@ -89,8 +94,13 @@ jobs:
           DEVICE="${{ github.event.inputs.target_device }}"
           SYSTEM="${{ github.event.inputs.system_version }}"
           KSU_VERSION="${{ github.event.inputs.kernelsu_version }}"
+          SUSFS_Enable="${{ github.event.inputs.Enable_SuSFS}}"
 
-          bash build.sh "$DEVICE" "$KSU_VERSION" "$SYSTEM"
+          if [ "$SUSFS_Enable" == "true" ]; then
+            bash build.sh "$DEVICE" "$KSU_VERSION" susfs "$SYSTEM"
+          else
+            bash build.sh "$DEVICE" "$KSU_VERSION" "$SYSTEM"
+          fi
 
 
       - name: Set Kernel Path
