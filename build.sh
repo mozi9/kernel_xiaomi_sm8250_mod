@@ -92,6 +92,7 @@ KSU_VERSION=$2
 if [ $3 == "susfs" ]; then
     SuSFS_ENABLE=1
 else
+    SuSFS_ENABLE=0
     TARGET_SYSTEM=$3
 fi
 
@@ -103,22 +104,22 @@ if [ "$KSU_VERSION" == "ksu" ]; then
     KSU_ZIP_STR=KernelSU
     echo "KSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
+elif [[ "$KSU_VERSION" == "rksu" && "$SuSFS_ENABLE" -eq 1 ]]; then
+    KSU_ZIP_STR=RKSU_SuSFS
+    echo "RKSU is enabled && SuSFS is enabled"
+    curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s susfs-v1.5.5
 elif [ "$KSU_VERSION" == "rksu" ]; then
     KSU_ZIP_STR=RKSU
     echo "RKSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s main
-elif [[ "$KSU_VERSION" == "rksu" && "$SuSFS_ENABLE" -eq 1 ]]; then
-    KSU_ZIP_STR=RKSU
-    echo "RKSU is enabled"
-    curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s susfs-v1.5.5
+elif [[ "$KSU_VERSION" == "sukisu" && "$SuSFS_ENABLE" -eq 1 ]]; then
+    KSU_ZIP_STR=SukiSU_SuSFS
+    echo "SukiSU is enabled && SuSFS is enabled"
+    curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s susfs-dev
 elif [ "$KSU_VERSION" == "sukisu" ]; then
     KSU_ZIP_STR=SukiSU
     echo "SukiSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s dev
-elif [[ "$KSU_VERSION" == "sukisu" && "$SuSFS_ENABLE" -eq 1 ]]; then
-    KSU_ZIP_STR=SukiSU
-    echo "SukiSU is enabled"
-    curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s susfs-dev
 else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
@@ -255,13 +256,13 @@ Build_MIUI(){
 
     make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
 
-    if [ $KSU_ENABLE -eq 1 ]; then
+    if [ "$KSU_ENABLE" -eq 1 ]; then
         scripts/config --file out/.config -e KSU
     else
         scripts/config --file out/.config -d KSU
     fi
 
-    if [ $SuSFS_ENABLE -eq 1 ];then
+    if [ "$SuSFS_ENABLE" -eq 1 ];then
         scripts/config --file out/.config \
             -e KSU_SUSFS \
             -e KSU_SUSFS_HAS_MAGIC_MOUNT \
@@ -293,6 +294,7 @@ Build_MIUI(){
             -d KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
             -d KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
             -d KSU_SUSFS_OPEN_REDIRECT
+    fi
 
     scripts/config --file out/.config \
         --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd \
