@@ -87,7 +87,7 @@ clang --version
 echo "TARGET_DEVICE: $TARGET_DEVICE"
 
 KSU_VERSION=$2
-[[ "$KSU_VERSION" == "ksu" || "$KSU_VERSION" == "rksu" || "$KSU_VERSION" == "sukisu" ]] && KSU_ENABLE=1 || KSU_ENABLE=0
+[[ "$KSU_VERSION" == "ksu" || "$KSU_VERSION" == "rksu" || "$KSU_VERSION" == "sukisu" || "$KSU_VERSION" == "sukisu-ultra" ]] && KSU_ENABLE=1 || KSU_ENABLE=0
 
 if [ $3 == "susfs" ]; then
     SuSFS_ENABLE=1
@@ -120,6 +120,12 @@ elif [ "$KSU_VERSION" == "sukisu" ]; then
     KSU_ZIP_STR=SukiSU
     echo "SukiSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s dev
+elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
+    KSU_ZIP_STR="SukiSU-Ultra"
+    echo "SuSFS in SukiSU-Ultra is enabled by default"
+    echo "SukiSU-Ultra is enabled && SuSFS is enabled"
+    ehco "Please patch KPM by yourself"
+    curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-dev
 else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
