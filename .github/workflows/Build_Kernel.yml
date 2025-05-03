@@ -42,6 +42,7 @@ on:
           - 'ksu'
           - 'rksu'
           - 'sukisu'
+          - 'sukisu-ultra'
           - 'noksu'
       
       Enable_SuSFS:
