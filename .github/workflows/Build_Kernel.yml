@@ -27,7 +27,7 @@ on:
         description: 'Target System'
         required: true
         type: choice
-        default: 'aosp'
+        default: 'miui'
         options:
           - 'aosp'
           - 'miui'
@@ -37,7 +37,7 @@ on:
         description: 'KernelSU Version'
         required: true
         type: choice
-        default: 'ksu'
+        default: 'sukisu-ultra'
         options:
           - 'ksu'
           - 'rksu'
