@@ -89,16 +89,9 @@ echo "TARGET_DEVICE: $TARGET_DEVICE"
 KSU_VERSION=$2
 [[ "$KSU_VERSION" == "ksu" || "$KSU_VERSION" == "rksu" || "$KSU_VERSION" == "sukisu" || "$KSU_VERSION" == "sukisu-ultra" ]] && KSU_ENABLE=1 || KSU_ENABLE=0
 
-if [ $3 == "susfs" ]; then
-    SuSFS_ENABLE=1
-else
-    SuSFS_ENABLE=0
-    TARGET_SYSTEM=$3
-fi
-
-if [ -z "$TARGET_SYSTEM" ]; then
-    TARGET_SYSTEM=$4
-fi
+SuSFS_ENABLE=0
+[[ "$3" == "susfs" ]] && SuSFS_ENABLE=1
+TARGET_SYSTEM=$4
 
 if [ "$KSU_VERSION" == "ksu" ]; then
     KSU_ZIP_STR=KernelSU
