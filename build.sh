@@ -8,7 +8,7 @@ set -e
 start_time=$(date +%s)
 start_current_time=$(date '+%T')
 
-TOOLCHAIN_PATH=$HOME/proton-clang/proton-clang-20210522/bin
+TOOLCHAIN_PATH=$HOME/toolchain/proton-clang/bin
 GIT_COMMIT_ID=$(git rev-parse --short=8 HEAD)
 TARGET_DEVICE=$1
 
@@ -148,6 +148,13 @@ Build_AOSP(){
         scripts/config --file out/.config -e KSU
     else
         scripts/config --file out/.config -d KSU
+    fi
+
+    # Enable the KSU_MANUAL_HOOK for sukisu-ultra
+    if [ "$KSU_VERSION" == "sukisu-ultra" ];then
+        scripts/config --file out/.config -e KSU_MANUAL_HOOK
+    else
+        scripts/config --file out/.config -e KSU_MANUAL_HOOK
     fi
 
     if [ "$SuSFS_ENABLE" -eq 1 ];then
@@ -294,6 +301,13 @@ Build_MIUI(){
         scripts/config --file out/.config -d KSU
     fi
 
+    # Enable the KSU_MANUAL_HOOK for sukisu-ultra
+    if [ "$KSU_VERSION" == "sukisu-ultra" ];then
+        scripts/config --file out/.config -e KSU_MANUAL_HOOK
+    else
+        scripts/config --file out/.config -e KSU_MANUAL_HOOK
+    fi
+
     if [ "$SuSFS_ENABLE" -eq 1 ];then
         scripts/config --file out/.config \
             -e KSU_SUSFS \
@@ -328,34 +342,34 @@ Build_MIUI(){
             -d KSU_SUSFS_OPEN_REDIRECT
     fi
 
-    scripts/config --file out/.config \
-        --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd \
-        -e PERF_CRITICAL_RT_TASK	\
-        -e SF_BINDER		\
-        -e OVERLAY_FS		\
-        -d DEBUG_FS \
-        -e MIGT \
-        -e MIGT_ENERGY_MODEL \
-        -e MIHW \
-        -e PACKAGE_RUNTIME_INFO \
-        -e BINDER_OPT \
-        -e KPERFEVENTS \
-        -e MILLET \
-        -e PERF_HUMANTASK \
-        -d LTO_CLANG \
-        -d LOCALVERSION_AUTO \
-        -e SF_BINDER \
-        -e XIAOMI_MIUI \
-        -d MI_MEMORY_SYSFS \
-        -e TASK_DELAY_ACCT \
-        -e MIUI_ZRAM_MEMORY_TRACKING \
-        -d CONFIG_MODULE_SIG_SHA512 \
-        -d CONFIG_MODULE_SIG_HASH \
-        -e MI_FRAGMENTION \
-        -e PERF_HELPER \
-        -e BOOTUP_RECLAIM \
-        -e MI_RECLAIM \
-        -e RTMM \
+        scripts/config --file out/.config \
+            --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd \
+            -e PERF_CRITICAL_RT_TASK	\
+            -e SF_BINDER		\
+            -e OVERLAY_FS		\
+            -d DEBUG_FS \
+            -e MIGT \
+            -e MIGT_ENERGY_MODEL \
+            -e MIHW \
+            -e PACKAGE_RUNTIME_INFO \
+            -e BINDER_OPT \
+            -e KPERFEVENTS \
+            -e MILLET \
+            -e PERF_HUMANTASK \
+            -d LTO_CLANG \
+            -d LOCALVERSION_AUTO \
+            -e SF_BINDER \
+            -e XIAOMI_MIUI \
+            -d MI_MEMORY_SYSFS \
+            -e TASK_DELAY_ACCT \
+            -e MIUI_ZRAM_MEMORY_TRACKING \
+            -d CONFIG_MODULE_SIG_SHA512 \
+            -d CONFIG_MODULE_SIG_HASH \
+            -e MI_FRAGMENTION \
+            -e PERF_HELPER \
+            -e BOOTUP_RECLAIM \
+            -e MI_RECLAIM \
+            -e RTMM \
 
     make $MAKE_ARGS -j$(nproc)
 
