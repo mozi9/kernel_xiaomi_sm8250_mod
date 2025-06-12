@@ -80,10 +80,10 @@ Other Features/Improvement of this Kernel:
   * `sukisu`: [SukiSU](https://github.com/ShirkNeko/KernelSU)
   * `sukisu-ultra`: [SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra)
 
-* **ENABLE\_SUSFS** (Enable or disable `susfs`):
+* **ENABLE\_SUSFS** (Enable or disable `SuSFS`):
 
-  * `susfs`: Enable [susfs](https://gitlab.com/simonpunk/susfs4ksu)
-  * Any other value: Disable `susfs`
+  * `susfs`: Enable [SuSFS](https://gitlab.com/simonpunk/susfs4ksu)
+  * Any other value: Disable `SuSFS`
 
 * **SYSTEM** (Target system type):
 
