@@ -85,8 +85,8 @@ Other Features/Improvement of this Kernel:
     
     * **SYSTEM** (Target system type):
     
-      * `MIUI`
-      * `AOSP`
+      * `miui`
+      * `aosp`
       * Any other value: Build for all supported systems
     
     **To build the kernel, run:**
