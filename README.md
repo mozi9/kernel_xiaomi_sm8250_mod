@@ -37,7 +37,7 @@ Other Features/Improvement of this Kernel:
 4. Support CANBus and USB CAN adapter (like CANable).
 5. Support LZ4KD, LZ4, LZ4HC, ZSTD compression algorithms for ZRAM.
 
-# How to build
+# Setting Up the Compilation Environment
 1. Prepair the basic build environment. 
 
     You have to have the basic common toolchains, such as `git`, `make`, `curl`, `bison`, `flex`, `zip`, etc, and some other packages.
@@ -69,7 +69,7 @@ Other Features/Improvement of this Kernel:
     cd ..
     ```
 
-3. Build Kernel
+# 3. Build Kernel
     
 * **KSU\_VERSION** (Select KernelSU version):
 
