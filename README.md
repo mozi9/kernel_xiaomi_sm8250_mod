@@ -71,25 +71,25 @@ Other Features/Improvement of this Kernel:
 
 3. Build Kernel
     
-    * **KSU\_VERSION** (Select KernelSU version):
-    
-      * `ksu`: [Official KernelSU (v0.9.5)](https://github.com/tiann/KernelSU/tree/v0.9.5)
-      * `rksu`: [RKSU](https://github.com/rsuntk/KernelSU)
-      * `sukisu`: [SukiSU](https://github.com/ShirkNeko/KernelSU)
-      * `sukisu-ultra`: [SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra)
-    
-    * **ENABLE\_SUSFS** (Enable or disable `SuSFS`):
-    
-      * `susfs`: Enable [SuSFS](https://gitlab.com/simonpunk/susfs4ksu)
-      * Any other value: Disable `SuSFS`
-    
-    * **SYSTEM** (Target system type):
-    
-      * `miui`
-      * `aosp`
-      * Any other value: Build for all supported systems
-    
-    **To build the kernel, run:**
+* **KSU\_VERSION** (Select KernelSU version):
+
+  * `ksu`: [Official KernelSU (v0.9.5)](https://github.com/tiann/KernelSU/tree/v0.9.5)
+  * `rksu`: [RKSU](https://github.com/rsuntk/KernelSU)
+  * `sukisu`: [SukiSU](https://github.com/ShirkNeko/KernelSU)
+  * `sukisu-ultra`: [SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra)
+
+* **ENABLE\_SUSFS** (Enable or disable `SuSFS`):
+
+  * `susfs`: Enable [SuSFS](https://gitlab.com/simonpunk/susfs4ksu)
+  * Any other value: Disable `SuSFS`
+
+* **SYSTEM** (Target system type):
+
+  * `miui`
+  * `aosp`
+  * Any other value: Build for all supported systems
+
+**To build the kernel, run:**
     
     ```bash
     bash build.sh TARGET_DEVICE [KSU_VERSION] [ENABLE_SUSFS] [SYSTEM]
