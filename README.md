@@ -68,40 +68,37 @@ Other Features/Improvement of this Kernel:
     unzip 20210522.zip
     cd ..
     ```
-
-3. Build
-
-    Build without KernelSU: 
-    ```bash
-    bash build.sh TARGET_DEVICE
-    ```
     
-    Build with KernelSU:
-    ```bash
-    bash build.sh TARGET_DEVICE ksu
-    ```
+---
 
-    For example, build for lmi (Redmi K30 Pro/POCO F2 Pro) without KernelSU:
-    ```bash
-    bash build.sh lmi
-    ````
+3. Build Parameters
 
-    For example, build for umi (Mi 10) with [KernelSU](https://github.com/tiann/KernelSU):
-    ```bash
-    bash build.sh umi ksu
-    ```
-
-    For example, build for umi (Mi 10) with [RKSU](https://github.com/rsuntk/KernelSU):
+      **KSU\_VERSION** (Select KernelSU version):
     
-    ```bash
-    bash build.sh umi rksu
-    ```
+      * `ksu`: [Official KernelSU (v0.9.5)](https://github.com/tiann/KernelSU/tree/v0.9.5)
+      * `rksu`: [RKSU](https://github.com/rsuntk/KernelSU)
+      * `sukisu`: [SukiSU](https://github.com/ShirkNeko/KernelSU)
+      * `sukisu-ultra`: [SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra)
     
-    For example, build for umi (Mi 10) with [SukiSU](https://github.com/ShirkNeko/KernelSU):
+    * **ENABLE\_SUSFS** (Enable or disable `susfs`):
     
-    ```bash
-    bash build.sh umi sukisu
-    ```
+      * `susfs`: Enable [susfs](https://gitlab.com/simonpunk/susfs4ksu)
+      * Any other value: Disable `susfs`
+    
+    * **SYSTEM** (Target system type):
+    
+      * `MIUI`
+      * `AOSP`
+      * Any other value: Build for all supported systems
 
-    And also, here is a `buildall.sh` can build for all supported models at once.
+---
+
+### Build Command
+
+To build the kernel, run:
+
+```bash
+bash build.sh TARGET_DEVICE [KSU_VERSION] [ENABLE_SUSFS] [SYSTEM]
+```
+And also, here is a `buildall.sh` can build for all supported models at once.
 
