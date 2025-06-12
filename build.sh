@@ -118,7 +118,7 @@ elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     echo "SuSFS in SukiSU-Ultra is enabled by default"
     echo "SukiSU-Ultra is enabled && SuSFS is enabled"
     echo "Please patch KPM by yourself"
-    curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-dev
+    curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
 else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
