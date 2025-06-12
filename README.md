@@ -95,5 +95,5 @@ Other Features/Improvement of this Kernel:
 bash build.sh TARGET_DEVICE [KSU_VERSION] [ENABLE_SUSFS] [SYSTEM]
 ```
     
-And also, here is a `buildall.sh` can build for all supported models at once.
+~~And also, here is a `buildall.sh` can build for all supported models at once.~~
 
