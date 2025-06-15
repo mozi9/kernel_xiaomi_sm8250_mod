@@ -90,7 +90,7 @@ TARGET_SYSTEM=$4
 
 echo "TARGET_DEVICE: $TARGET_DEVICE"
 
-[[ "$KSU_VERSION" == "ksu" || "$KSU_VERSION" == "rksu" || "$KSU_VERSION" == "sukisu" || "$KSU_VERSION" == "sukisu-ultra" ]] && KSU_ENABLE=1 || KSU_ENABLE=0
+KSU_ENABLE=$([[ "$KSU_VERSION" == "ksu" || "$KSU_VERSION" == "rksu" || "$KSU_VERSION" == "sukisu" || "$KSU_VERSION" == "sukisu-ultra" ]] && echo 1 || echo 0)
 
 if [ "$ADDITIONAL" == "susfs-kpm" ]; then
     SuSFS_ENABLE=1
@@ -110,9 +110,12 @@ if [ "$KSU_VERSION" == "ksu" ]; then
     KSU_ZIP_STR=KernelSU
     echo "KSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
+elif [[ "$KSU_VERSION" == "ksu" && "$SuSFS_ENABLE" -eq 1 ]]; then
+    echo "Official KernelSU not supported SuSFS"
+    exit 1
 elif [[ "$KSU_VERSION" == "rksu" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR=RKSU_SuSFS
-    echo "RKSU is enabled && SuSFS is enabled"
+    echo "RKSU && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s susfs-v1.5.5
 elif [ "$KSU_VERSION" == "rksu" ]; then
     KSU_ZIP_STR=RKSU
@@ -120,17 +123,20 @@ elif [ "$KSU_VERSION" == "rksu" ]; then
     curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s main
 elif [[ "$KSU_VERSION" == "sukisu" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR=SukiSU_SuSFS
-    echo "SukiSU is enabled && SuSFS is enabled"
+    echo "SukiSU && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s susfs-dev
 elif [ "$KSU_VERSION" == "sukisu" ]; then
     KSU_ZIP_STR=SukiSU
     echo "SukiSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s dev
-elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
+elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
-    echo "SuSFS in SukiSU-Ultra is enabled by default"
-    echo "SukiSU-Ultra is enabled && SuSFS is enabled"
+    echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
+    KSU_ZIP_STR=SukiSU-Ultra
+    echo "SukiSU-Ultra is enabled"
+    curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
 else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
@@ -368,7 +374,11 @@ Image_Repack(){
 
     cd anykernel 
 
-    ZIP_FILENAME=Kernel_AOSP_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
+    if [ "$1" == "MIUI" ]; then
+        ZIP_FILENAME=Kernel_MIUI_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
+    else
+        ZIP_FILENAME=Kernel_AOSP_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
+    fi
 
     zip -r9 $ZIP_FILENAME ./* -x .git .gitignore out/ ./*.zip
 
