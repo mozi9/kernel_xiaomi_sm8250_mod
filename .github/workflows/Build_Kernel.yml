@@ -37,18 +37,24 @@ on:
         description: 'KernelSU Version'
         required: true
         type: choice
-        default: 'sukisu-ultra'
+        default: 'ksu'
         options:
           - 'ksu'
           - 'rksu'
           - 'sukisu'
           - 'sukisu-ultra'
           - 'noksu'
-      
-      Enable_SuSFS:
-        description: 'Enable_SuSFS'
-        required: false
-        type: boolean
+
+      Additional_Function:
+        description: 'Supported additional functions'
+        required: true
+        type: choice
+        default: 'no'
+        options:
+          - 'susfs'
+          - 'kpm'
+          - 'susfs-kpm'
+          - 'no'
 
 jobs:
   build:
@@ -76,9 +82,11 @@ jobs:
       - name: Download Proton Clang Toolchain
         if: steps.clang-cache.outputs.cache-hit != 'true'
         run: |
+          mkdir -p toolchain; cd toolchain
           wget https://github.com/kdrag0n/proton-clang/archive/refs/tags/20210522.zip
           unzip 20210522.zip
-          rm proton-clang-20210522/bin/ld 20210522.zip
+          mv proton-clang-20210522 proton-clang
+          rm proton-clang/bin/ld 20210522.zip
           
       - name: Cache ccache
         uses: actions/cache@v4
@@ -95,13 +103,10 @@ jobs:
           DEVICE="${{ github.event.inputs.target_device }}"
           SYSTEM="${{ github.event.inputs.system_version }}"
           KSU_VERSION="${{ github.event.inputs.kernelsu_version }}"
-          SUSFS_Enable="${{ github.event.inputs.Enable_SuSFS}}"
+          ADDITIONAL_FUNCTION="${{ Additional_Function }}"
+          
+          bash build.sh "$DEVICE" "$KSU_VERSION" $ADDITIONAL_FUNCTION "$SYSTEM"
 
-          if [ "$SUSFS_Enable" == "true" ]; then
-            bash build.sh "$DEVICE" "$KSU_VERSION" susfs "$SYSTEM"
-          else
-            bash build.sh "$DEVICE" "$KSU_VERSION" "$SYSTEM"
-          fi
 
 
       - name: Set Kernel Path
