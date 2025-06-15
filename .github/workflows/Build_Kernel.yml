@@ -45,7 +45,7 @@ on:
           - 'sukisu-ultra'
           - 'noksu'
 
-      Additional_Function:
+      additional_function:
         description: 'Supported additional functions'
         required: true
         type: choice
@@ -103,7 +103,7 @@ jobs:
           DEVICE="${{ github.event.inputs.target_device }}"
           SYSTEM="${{ github.event.inputs.system_version }}"
           KSU_VERSION="${{ github.event.inputs.kernelsu_version }}"
-          ADDITIONAL_FUNCTION="${{ Additional_Function }}"
+          ADDITIONAL_FUNCTION="${{ github.event.inputs.additional_function }}"
           
           bash build.sh "$DEVICE" "$KSU_VERSION" $ADDITIONAL_FUNCTION "$SYSTEM"
 
