@@ -5,9 +5,6 @@
 # Ensure the script exits on error
 set -e
 
-start_time=$(date +%s)
-start_current_time=$(date '+%T')
-
 TOOLCHAIN_PATH=$HOME/toolchain/proton-clang/bin
 GIT_COMMIT_ID=$(git rev-parse --short=8 HEAD)
 TARGET_DEVICE=$1
@@ -133,7 +130,6 @@ elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SuSFS in SukiSU-Ultra is enabled by default"
     echo "SukiSU-Ultra is enabled && SuSFS is enabled"
-    echo "Please patch KPM by yourself"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
 else
     KSU_ZIP_STR=NoKernelSU
@@ -408,11 +404,3 @@ else
 fi
     
 echo "Done. The flashable zip is: [./$ZIP_FILENAME]"
-
-end_time=$(date +%s)
-end_current_time=$(date '+%T')
-
-duration=$((end_time - start_time))
-minutes=$((duration / 60))
-seconds=$((duration % 60))
-echo "Total time: ${minutes}m:${seconds}s"
