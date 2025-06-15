@@ -81,7 +81,7 @@ Other Features/Improvement of this Kernel:
 * **ADDITIONAL_FUNCTION** (Enable `SuSFS` or `KPM`):
 
   * `susfs`: Enable [SuSFS](https://gitlab.com/simonpunk/susfs4ksu)
-  * `KPM`: Enable [KPM](https://github.com/SukiSU-Ultra/SukiSU_KernelPatch_patch)
+  * `kpm`: Enable [KPM](https://github.com/SukiSU-Ultra/SukiSU_KernelPatch_patch)
   * `susfs-kpm` Enable SuSFS and KPM
   * Any other value: Disable `SuSFS` and `KPM`
 
