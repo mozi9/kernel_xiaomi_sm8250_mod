@@ -8,7 +8,7 @@ set -e
 start_time=$(date +%s)
 start_current_time=$(date '+%T')
 
-TOOLCHAIN_PATH=$HOME/proton-clang/proton-clang-20210522/bin
+TOOLCHAIN_PATH=$HOME/toolchain/proton-clang/bin
 GIT_COMMIT_ID=$(git rev-parse --short=8 HEAD)
 TARGET_DEVICE=$1
 
@@ -83,15 +83,31 @@ fi
 echo "[clang --version]:"
 clang --version
 
+# Initialize variable
+KERNEL_SRC=$(pwd)
+SuSFS_ENABLE=0
+KPM_ENABLE=0
+KSU_VERSION=$2
+ADDITIONAL=$3
+TARGET_SYSTEM=$4
 
 echo "TARGET_DEVICE: $TARGET_DEVICE"
 
-KSU_VERSION=$2
 [[ "$KSU_VERSION" == "ksu" || "$KSU_VERSION" == "rksu" || "$KSU_VERSION" == "sukisu" || "$KSU_VERSION" == "sukisu-ultra" ]] && KSU_ENABLE=1 || KSU_ENABLE=0
 
-SuSFS_ENABLE=0
-[[ "$3" == "susfs" ]] && SuSFS_ENABLE=1
-TARGET_SYSTEM=$4
+if [ "$ADDITIONAL" == "susfs-kpm" ]; then
+    SuSFS_ENABLE=1
+    KPM_ENABLE=1
+    echo "Enable SuSFS and KPM"
+elif [ "$ADDITIONAL" == "susfs" ]; then
+    SuSFS_ENABLE=1
+    echo "Enable SuSFS"
+elif [ "$ADDITIONAL" == "kpm" ]; then
+    KPM_ENABLE=1
+    echo "Enable KPM"
+else 
+    echo "The additional function is not enabled"
+fi
 
 if [ "$KSU_VERSION" == "ksu" ]; then
     KSU_ZIP_STR=KernelSU
@@ -144,82 +160,11 @@ Build_AOSP(){
     echo "Building for AOSP......"
     make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
 
-    if [ $KSU_ENABLE -eq 1 ]; then
-        scripts/config --file out/.config -e KSU
-    else
-        scripts/config --file out/.config -d KSU
-    fi
-
-    # Enable the KSU_MANUAL_HOOK for sukisu-ultra
-    if [ "$KSU_VERSION" == "sukisu-ultra" ];then
-        scripts/config --file out/.config -e KSU_MANUAL_HOOK
-    else
-        scripts/config --file out/.config -e KSU_MANUAL_HOOK
-    fi
-
-    if [ "$SuSFS_ENABLE" -eq 1 ];then
-        scripts/config --file out/.config \
-            -e KSU_SUSFS \
-            -e KSU_SUSFS_HAS_MAGIC_MOUNT \
-            -e KSU_SUSFS_SUS_PATH \
-            -e KSU_SUSFS_SUS_MOUNT \
-            -e KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT \
-            -e KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT \
-            -e KSU_SUSFS_SUS_KSTAT \
-            -e KSU_SUSFS_TRY_UMOUNT \
-            -e KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT \
-            -e KSU_SUSFS_SPOOF_UNAME \
-            -e KSU_SUSFS_ENABLE_LOG \
-            -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
-            -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
-            -e KSU_SUSFS_OPEN_REDIRECT
-     else
-        scripts/config --file out/.config \
-            -d KSU_SUSFS \
-            -d KSU_SUSFS_HAS_MAGIC_MOUNT \
-            -d KSU_SUSFS_SUS_PATH \
-            -d KSU_SUSFS_SUS_MOUNT \
-            -d KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT \
-            -d KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT \
-            -d KSU_SUSFS_SUS_KSTAT \
-            -d KSU_SUSFS_TRY_UMOUNT \
-            -d KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT \
-            -d KSU_SUSFS_SPOOF_UNAME \
-            -d KSU_SUSFS_ENABLE_LOG \
-            -d KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
-            -d KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
-            -d KSU_SUSFS_OPEN_REDIRECT
-    fi
+    SET_CONFIG
     
     make $MAKE_ARGS -j$(nproc)
 
-    if [ -f "out/arch/arm64/boot/Image" ]; then
-        echo "The file [out/arch/arm64/boot/Image] exists. AOSP Build successfully."
-    else
-        echo "The file [out/arch/arm64/boot/Image] does not exist. Seems AOSP build failed."
-        exit 1
-    fi
-
-    echo "Generating [out/arch/arm64/boot/dtb]......"
-    find out/arch/arm64/boot/dts -name '*.dtb' -exec cat {} + >out/arch/arm64/boot/dtb
-
-    rm -rf anykernel/kernels/
-
-    mkdir -p anykernel/kernels/
-
-    cp out/arch/arm64/boot/Image anykernel/kernels/
-    cp out/arch/arm64/boot/dtb anykernel/kernels/
-
-    cd anykernel 
-
-    ZIP_FILENAME=Kernel_AOSP_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
-
-    zip -r9 $ZIP_FILENAME ./* -x .git .gitignore out/ ./*.zip
-
-    mv $ZIP_FILENAME ../
-
-    cd ..
-
+    Image_Repack
 
     echo "Build for AOSP finished."
 
@@ -292,9 +237,49 @@ Build_MIUI(){
     sed -i 's/\/\/39 01 00 00 01 00 03 51 03 FF/39 01 00 00 01 00 03 51 03 FF/g' ${dts_source}/dsi-panel-j11-38-08-0a-fhd-cmd.dtsi
     sed -i 's/\/\/39 01 00 00 11 00 03 51 03 FF/39 01 00 00 11 00 03 51 03 FF/g' ${dts_source}/dsi-panel-j2-p2-1-38-0c-0a-dsc-cmd.dtsi
 
-
     make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
 
+    SET_CONFIG MIUI
+
+    make $MAKE_ARGS -j$(nproc)
+
+    Image_Repack MIUI
+    # ------------- End of Building for MIUI -------------
+
+}
+
+SET_CONFIG(){
+    if [ "$1" == "MIUI" ]; then
+        scripts/config --file out/.config \
+            --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd \
+            -e PERF_CRITICAL_RT_TASK	\
+            -e SF_BINDER		\
+            -e OVERLAY_FS		\
+            -d DEBUG_FS \
+            -e MIGT \
+            -e MIGT_ENERGY_MODEL \
+            -e MIHW \
+            -e PACKAGE_RUNTIME_INFO \
+            -e BINDER_OPT \
+            -e KPERFEVENTS \
+            -e MILLET \
+            -e PERF_HUMANTASK \
+            -d LTO_CLANG \
+            -d LOCALVERSION_AUTO \
+            -e SF_BINDER \
+            -e XIAOMI_MIUI \
+            -d MI_MEMORY_SYSFS \
+            -e TASK_DELAY_ACCT \
+            -e MIUI_ZRAM_MEMORY_TRACKING \
+            -d CONFIG_MODULE_SIG_SHA512 \
+            -d CONFIG_MODULE_SIG_HASH \
+            -e MI_FRAGMENTION \
+            -e PERF_HELPER \
+            -e BOOTUP_RECLAIM \
+            -e MI_RECLAIM \
+            -e RTMM
+    fi
+    
     if [ "$KSU_ENABLE" -eq 1 ]; then
         scripts/config --file out/.config -e KSU
     else
@@ -306,6 +291,19 @@ Build_MIUI(){
         scripts/config --file out/.config -e KSU_MANUAL_HOOK
     else
         scripts/config --file out/.config -e KSU_MANUAL_HOOK
+    fi
+
+    # Config KPM 
+    if [ "$KPM_ENABLE" -eq 1 ]; then
+        scripts/config --file out/.config \
+            -e KPM \
+            -e KALLSYMS \
+            -e KALLSYMS_ALL
+    else 
+        scripts/config --file out/.config \
+            -d KPM \
+            -d KALLSYMS \
+            -d KALLSYMS_ALL
     fi
 
     if [ "$SuSFS_ENABLE" -eq 1 ];then
@@ -341,77 +339,62 @@ Build_MIUI(){
             -d KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
             -d KSU_SUSFS_OPEN_REDIRECT
     fi
+}
 
-        scripts/config --file out/.config \
-            --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd \
-            -e PERF_CRITICAL_RT_TASK	\
-            -e SF_BINDER		\
-            -e OVERLAY_FS		\
-            -d DEBUG_FS \
-            -e MIGT \
-            -e MIGT_ENERGY_MODEL \
-            -e MIHW \
-            -e PACKAGE_RUNTIME_INFO \
-            -e BINDER_OPT \
-            -e KPERFEVENTS \
-            -e MILLET \
-            -e PERF_HUMANTASK \
-            -d LTO_CLANG \
-            -d LOCALVERSION_AUTO \
-            -e SF_BINDER \
-            -e XIAOMI_MIUI \
-            -d MI_MEMORY_SYSFS \
-            -e TASK_DELAY_ACCT \
-            -e MIUI_ZRAM_MEMORY_TRACKING \
-            -d CONFIG_MODULE_SIG_SHA512 \
-            -d CONFIG_MODULE_SIG_HASH \
-            -e MI_FRAGMENTION \
-            -e PERF_HELPER \
-            -e BOOTUP_RECLAIM \
-            -e MI_RECLAIM \
-            -e RTMM \
-
-    make $MAKE_ARGS -j$(nproc)
-
-
-
+Image_Repack(){
     if [ -f "out/arch/arm64/boot/Image" ]; then
-        echo "The file [out/arch/arm64/boot/Image] exists. MIUI Build successfully."
+        echo "The file [out/arch/arm64/boot/Image] exists. AOSP Build successfully."
     else
-        echo "The file [out/arch/arm64/boot/Image] does not exist. Seems MIUI build failed."
+        echo "The file [out/arch/arm64/boot/Image] does not exist. Seems AOSP build failed."
         exit 1
+    fi
+
+    # KPM Patch
+    if [[ "$KPM_ENABLE" -eq 1 && "$KSU_VERSION" == "sukisu-ultra" ]]; then
+        Patch_KPM
     fi
 
     echo "Generating [out/arch/arm64/boot/dtb]......"
     find out/arch/arm64/boot/dts -name '*.dtb' -exec cat {} + >out/arch/arm64/boot/dtb
 
-
     # Restore modified dts
-    rm -rf ${dts_source}
-    mv .dts.bak ${dts_source}
+    if [ "$1" == "MIUI" ]; then
+        rm -rf ${dts_source}
+        mv .dts.bak ${dts_source}
+    fi
 
     rm -rf anykernel/kernels/
+
     mkdir -p anykernel/kernels/
 
     cp out/arch/arm64/boot/Image anykernel/kernels/
     cp out/arch/arm64/boot/dtb anykernel/kernels/
 
-    echo "Build for MIUI finished."
-
-    # Restore local version string
-    sed -i "s/${local_version_date_str}/${local_version_str}/g" arch/arm64/configs/${TARGET_DEVICE}_defconfig
-
-
     cd anykernel 
 
-    ZIP_FILENAME=Kernel_MIUI_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
+    ZIP_FILENAME=Kernel_AOSP_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
 
     zip -r9 $ZIP_FILENAME ./* -x .git .gitignore out/ ./*.zip
 
     mv $ZIP_FILENAME ../
 
     cd ..
-    # ------------- End of Building for MIUI -------------
+}
+
+Patch_KPM(){
+    cd out/arch/arm64/boot
+    curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch
+    chmod +x patch
+    ./patch
+    if [ $? -eq 0 ]; then
+        rm -f Image
+        mv oImage Image
+        echo "Image file repair complete"
+    else
+        echo "KPM Patch Failed, Use Original Image"
+    fi
+    
+    cd $KERNEL_SRC
 
 }
 
