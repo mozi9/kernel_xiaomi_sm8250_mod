@@ -71,17 +71,19 @@ Other Features/Improvement of this Kernel:
 
 # Build Kernel
     
-* **KSU\_VERSION** (Select KernelSU version):
+* **KSU_VERSION** (Select KernelSU version):
 
   * `ksu`: [Official KernelSU (v0.9.5)](https://github.com/tiann/KernelSU/tree/v0.9.5)
   * `rksu`: [RKSU](https://github.com/rsuntk/KernelSU)
   * `sukisu`: [SukiSU](https://github.com/ShirkNeko/KernelSU)
   * `sukisu-ultra`: [SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra)
 
-* **ENABLE\_SUSFS** (Enable or disable `SuSFS`):
+* **ADDITIONAL_FUNCTION** (Enable `SuSFS` or `KPM`):
 
   * `susfs`: Enable [SuSFS](https://gitlab.com/simonpunk/susfs4ksu)
-  * Any other value: Disable `SuSFS`
+  * `KPM`: Enable [KPM](https://github.com/SukiSU-Ultra/SukiSU_KernelPatch_patch)
+  * `susfs-kpm` Enable SuSFS and KPM
+  * Any other value: Disable `SuSFS` and `KPM`
 
 * **SYSTEM** (Target system type):
 
