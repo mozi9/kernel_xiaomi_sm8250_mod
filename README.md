@@ -94,5 +94,5 @@ Other Features/Improvement of this Kernel:
 **To build the kernel, run:**
     
 ```bash
-bash build.sh TARGET_DEVICE [KSU_VERSION] [ENABLE_SUSFS] [SYSTEM]
+bash build.sh TARGET_DEVICE [KSU_VERSION] [ADDITIONAL_FUNCTION] [SYSTEM]
 ```
