@@ -46,7 +46,7 @@ on:
           - 'noksu'
 
       additional_function:
-        description: 'Supported additional functions'
+        description: 'Additional Functions'
         required: true
         type: choice
         default: 'no'
