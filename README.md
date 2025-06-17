@@ -98,5 +98,5 @@ bash build.sh TARGET_DEVICE [KSU_VERSION] [ADDITIONAL_FUNCTION] [SYSTEM]
 ```
 
 
-> **Tip**
+> [!NOTE]
 > If you see errors like `.relr.dyn` or `cannot find libc.so.6`, your toolchain's `ld` is too old. Remove it to use the system linker, or update your toolchain.
