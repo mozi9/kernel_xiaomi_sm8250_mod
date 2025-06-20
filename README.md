@@ -38,36 +38,36 @@ Other Features/Improvement of this Kernel:
 5. Support LZ4KD, LZ4, LZ4HC, ZSTD compression algorithms for ZRAM.
 
 # Setting Up the Environment
-1. Prepair the basic build environment. 
+### Prepair the basic build environment.
 
-    You have to have the basic common toolchains, such as `git`, `make`, `curl`, `bison`, `flex`, `zip`, etc, and some other packages.
-    In Debian/Ubuntu, you can
-    ```bash
-    sudo apt install build-essential git curl wget bison flex zip bc cpio libssl-dev ccache
-    ```
-    And also, you have to have `python` (only `python3` is not enough). you can install the apt package `python-is-python3`.
+You have to have the basic common toolchains, such as `git`, `make`, `curl`, `bison`, `flex`, `zip`, etc, and some other packages.
+In Debian/Ubuntu, you can
+```bash
+sudo apt install build-essential git curl wget bison flex zip bc cpio libssl-dev ccache
+```
+And also, you have to have `python` (only `python3` is not enough). you can install the apt package `python-is-python3`.
 
-    In RHEL/RPM based OS, you can
-    ```bash
-    sudo yum groupinstall 'Development Tools'
-    sudo yum install wget bc openssl-devel ccache
-    ```
+In RHEL/RPM based OS, you can
+```bash
+sudo yum groupinstall 'Development Tools'
+sudo yum install wget bc openssl-devel ccache
+```
 
-    Notice: `ccache` is enabled in `build.sh` for speed up the compiling. `CCACHE_DIR` has been set as `$HOME/.cache/ccache_mikernel` in `build.sh`. If you don't like you can remove or modify it.
+Notice: `ccache` is enabled in `build.sh` for speed up the compiling. `CCACHE_DIR` has been set as `$HOME/.cache/ccache_mikernel` in `build.sh`. If you don't like you can remove or modify it.
 
-2. Download [proton-clang] compiler toolchain
+### Download compiler toolchain
 
-    You have to have `aarch64-linux-gnu`, `arm-linux-gnueabi`, `clang`. [Proton Clang](https://github.com/kdrag0n/proton-clang/) is a good prebuilt clang cross compiler toolchain.
+You have to have `aarch64-linux-gnu`, `arm-linux-gnueabi`, `clang`. [Proton Clang](https://github.com/kdrag0n/proton-clang/) is a good prebuilt clang cross compiler toolchain.
 
-    The default toolchain path is `$HOME/proton-clang/proton-clang-20210522/bin` which is set in `build.sh`. If you are using another location please change `TOOLCHAIN_PATH` in `build.sh`.
+The default toolchain path is `$HOME/proton-clang/proton-clang-20210522/bin` which is set in `build.sh`. If you are using another location please change `TOOLCHAIN_PATH` in `build.sh`.
 
-    ```bash
-    mkdir proton-clang
-    cd proton-clang
-    wget https://github.com/kdrag0n/proton-clang/archive/refs/tags/20210522.zip
-    unzip 20210522.zip
-    cd ..
-    ```
+```bash
+mkdir proton-clang
+cd proton-clang
+wget https://github.com/kdrag0n/proton-clang/archive/refs/tags/20210522.zip
+unzip 20210522.zip
+cd ..
+```
 
 # Build Kernel
 
