@@ -895,7 +895,6 @@ static int ovl_dir_open(struct inode *inode, struct file *file)
 	if (!od)
 		return -ENOMEM;
 
-
 	type = ovl_path_real(file->f_path.dentry, &realpath);
 	realfile = ovl_path_open(&realpath, file->f_flags);
 	if (IS_ERR(realfile)) {
