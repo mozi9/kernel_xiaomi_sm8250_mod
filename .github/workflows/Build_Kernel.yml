@@ -37,12 +37,12 @@ on:
         description: 'KernelSU Version'
         required: true
         type: choice
-        default: 'ksu'
+        default: 'sukisu-ultra'
         options:
+          - 'sukisu-ultra'
           - 'ksu'
           - 'rksu'
           - 'sukisu'
-          - 'sukisu-ultra'
           - 'noksu'
 
       additional_function:
@@ -51,10 +51,10 @@ on:
         type: choice
         default: 'no'
         options:
+          - 'no'
+          - 'susfs-kpm'
           - 'susfs'
           - 'kpm'
-          - 'susfs-kpm'
-          - 'no'
 
 jobs:
   build:
@@ -76,8 +76,8 @@ jobs:
         uses: actions/cache@v4
         id: clang-cache
         with:
-          path: proton-clang-20210522
-          key: ${{ runner.os }}-proton-clang-20210522
+          path: proton-clang
+          key: ${{ runner.os }}-proton-clang
 
       - name: Download Proton Clang Toolchain
         if: steps.clang-cache.outputs.cache-hit != 'true'
@@ -98,20 +98,15 @@ jobs:
 
       - name: Build Kernel
         run: |
-          sed -i 's|TOOLCHAIN_PATH=\$HOME/toolchain/proton-clang/bin|TOOLCHAIN_PATH=$(pwd)/proton-clang-20210522/bin|' build.sh
-
+          sed -i 's|TOOLCHAIN_PATH=\$HOME/toolchain/proton-clang/bin|TOOLCHAIN_PATH=$(pwd)/toolchain/proton-clang/bin|' build.sh
           DEVICE="${{ github.event.inputs.target_device }}"
           SYSTEM="${{ github.event.inputs.system_version }}"
           KSU_VERSION="${{ github.event.inputs.kernelsu_version }}"
           ADDITIONAL_FUNCTION="${{ github.event.inputs.additional_function }}"
-          
           bash build.sh "$DEVICE" "$KSU_VERSION" $ADDITIONAL_FUNCTION "$SYSTEM"
-
-
 
       - name: Set Kernel Path
         run: |
-
           if [[ "${{ github.event.inputs.system_version }}" == "aosp" || "${{ github.event.inputs.system_version }}" == "miui" ]]; then
               KernelPath=$(ls Kernel_* 2>/dev/null || true)
               echo "KernelPath=$(pwd)/$KernelPath" >> $GITHUB_ENV
