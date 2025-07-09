@@ -156,7 +156,9 @@ Build_AOSP(){
     make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
 
     SET_CONFIG
-    
+ 
+    (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
+
     make $MAKE_ARGS -j$(nproc)
     
     Image_Repack
@@ -236,6 +238,8 @@ Build_MIUI(){
 
     SET_CONFIG MIUI
 
+    (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
+
     make $MAKE_ARGS -j$(nproc)
 
     Image_Repack MIUI
@@ -281,8 +285,6 @@ SET_CONFIG(){
         scripts/config --file out/.config -d KSU
     fi
    
-    scripts/config --file out/.config --set-str CONFIG_LOCALVERSION "-perf"
-
     # Enable the KSU_MANUAL_HOOK for sukisu-ultra
     if [ "$KSU_VERSION" == "sukisu-ultra" ];then
         scripts/config --file out/.config -e KSU_MANUAL_HOOK
