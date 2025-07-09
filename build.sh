@@ -154,7 +154,7 @@ git clone https://github.com/liyafe1997/AnyKernel3 -b kona --single-branch --dep
 local_version_str="-perf"
 local_version_date_str="-${GIT_COMMIT_ID}"
 
-sed -i "s/${local_version_str}/${local_version_date_str}/g" arch/arm64/configs/${TARGET_DEVICE}_defconfig
+-sed -i "s/${local_version_str}/${local_version_date_str}/g" arch/arm64/configs/${TARGET_DEVICE}_defconfig
 
 
 Build_AOSP(){
@@ -166,8 +166,6 @@ Build_AOSP(){
     
     make $MAKE_ARGS -j$(nproc)
     
-    sed -i 's/+//' out/arch/arm64/boot/Image
-
     Image_Repack
 
     echo "Build for AOSP finished."
@@ -247,8 +245,6 @@ Build_MIUI(){
 
     make $MAKE_ARGS -j$(nproc)
 
-    sed -i 's/+//' out/arch/arm64/boot/Image
-
     Image_Repack MIUI
     # ------------- End of Building for MIUI -------------
 
@@ -291,6 +287,8 @@ SET_CONFIG(){
     else
         scripts/config --file out/.config -d KSU
     fi
+   
+    scripts/config --file out/.config --set-str CONFIG_LOCALVERSION "-perf"
 
     # Enable the KSU_MANUAL_HOOK for sukisu-ultra
     if [ "$KSU_VERSION" == "sukisu-ultra" ];then
