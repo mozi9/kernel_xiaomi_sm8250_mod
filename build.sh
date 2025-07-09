@@ -6,7 +6,7 @@
 set -e
 
 TOOLCHAIN_PATH=$HOME/toolchain/proton-clang/bin
-GIT_COMMIT_ID=$(git rev-parse --short=8 HEAD)
+GIT_COMMIT_ID=$(git rev-parse --short=13 HEAD)
 TARGET_DEVICE=$1
 
 if [ -z "$1" ]; then
@@ -152,7 +152,7 @@ git clone https://github.com/liyafe1997/AnyKernel3 -b kona --single-branch --dep
 
 # Add date to local version
 local_version_str="-perf"
-local_version_date_str="-$(date +%Y%m%d)-${GIT_COMMIT_ID}-perf"
+local_version_date_str="-${GIT_COMMIT_ID}"
 
 sed -i "s/${local_version_str}/${local_version_date_str}/g" arch/arm64/configs/${TARGET_DEVICE}_defconfig
 
@@ -165,6 +165,8 @@ Build_AOSP(){
     SET_CONFIG
     
     make $MAKE_ARGS -j$(nproc)
+    
+    sed -i 's/+//' out/arch/arm64/boot/Image
 
     Image_Repack
 
@@ -244,6 +246,8 @@ Build_MIUI(){
     SET_CONFIG MIUI
 
     make $MAKE_ARGS -j$(nproc)
+
+    sed -i 's/+//' out/arch/arm64/boot/Image
 
     Image_Repack MIUI
     # ------------- End of Building for MIUI -------------
