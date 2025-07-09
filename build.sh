@@ -159,9 +159,9 @@ Build_AOSP(){
  
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
 
-    export KBUILD_BUILD_USER="宝明($(date +'%m/%d'))" 
-    export KBUILD_BUILD_HOST="倒卖死全家"
-    export KBUILD_BUILD_TIMESTAMP="$(date +'%a %b %d %H:%M:%S %Z 2023')"
+    export KBUILD_BUILD_USER="酷安" 
+    export KBUILD_BUILD_HOST="宝明v"
+    export KBUILD_BUILD_TIMESTAMP="$(TZ='Asia/Shanghai' date +'%a %b %d %H:%M:%S CST %Y')"
    
     make $MAKE_ARGS -j$(nproc)
     
@@ -244,9 +244,9 @@ Build_MIUI(){
 
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
 
-    export KBUILD_BUILD_USER="宝明($(date +'%m/%d'))" 
-    export KBUILD_BUILD_HOST="倒卖死全家"
-    export KBUILD_BUILD_TIMESTAMP="$(date +'%a %b %d %H:%M:%S %Z 2023')"
+    export KBUILD_BUILD_USER="酷安" 
+    export KBUILD_BUILD_HOST="宝明v"
+    export KBUILD_BUILD_TIMESTAMP="$(TZ='Asia/Shanghai' date +'%a %b %d %H:%M:%S CST %Y')"
 
     make $MAKE_ARGS -j$(nproc)
 
