@@ -159,6 +159,9 @@ Build_AOSP(){
  
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
 
+    export KBUILD_BUILD_TIMESTAMP="$(date +'%a %b %d %H:%M:%S %Z 2023')"
+    echo "Build time set: $KBUILD_BUILD_TIMESTAMP" >> build.log
+
     make $MAKE_ARGS -j$(nproc)
     
     Image_Repack
@@ -239,6 +242,9 @@ Build_MIUI(){
     SET_CONFIG MIUI
 
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
+
+    export KBUILD_BUILD_TIMESTAMP="$(date +'%a %b %d %H:%M:%S %Z 2023')"
+    echo "Build time set: $KBUILD_BUILD_TIMESTAMP" >> build.log
 
     make $MAKE_ARGS -j$(nproc)
 
