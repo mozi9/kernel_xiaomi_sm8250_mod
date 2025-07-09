@@ -377,6 +377,39 @@ Image_Repack(){
     cp out/arch/arm64/boot/Image anykernel/kernels/
     cp out/arch/arm64/boot/dtb anykernel/kernels/
 
+    
+    # ===================== 创建启动警告脚本 =====================
+    echo "添加启动警告脚本到 ramdisk..."
+    
+    # 1. 确保必要的目录存在
+    mkdir -p anykernel/ramdisk/sbin
+    
+    # 2. 创建并写入 init.rc 脚本
+    cat > anykernel/ramdisk/sbin/init.rc << 'EOF'
+#!/system/bin/sh
+
+# 内核启动警告信息
+echo "**************************************************"
+echo "* 警告：本内核由宝明构建，严禁倒卖！              *"
+echo "* Resale of this kernel is strictly forbidden!   *"
+echo "**************************************************"
+echo "* 编译时间: $(date)                             *"
+echo "* 设备型号: $TARGET_DEVICE                        *"
+echo "**************************************************"
+EOF
+    
+    # 3. 设置可执行权限
+    chmod 755 anykernel/ramdisk/sbin/init.rc
+    
+    # 4. 确保内核配置支持打印这些消息
+    scripts/config --file out/.config \
+        -e CONFIG_PRINTK \
+        --set-str CONFIG_CONSOLE_LOGLEVEL_DEFAULT "7" \
+        --set-str CONFIG_MESSAGE_LOGLEVEL_DEFAULT "7"
+    
+    echo "启动警告脚本添加完成"
+    # ===================== 启动警告脚本结束 =====================
+    
     cd anykernel 
 
     if [ "$1" == "MIUI" ]; then
