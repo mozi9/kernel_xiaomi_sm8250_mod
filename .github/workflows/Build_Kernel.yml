@@ -1,10 +1,10 @@
-name: Build Kernel
+name: Kernel Builder
 
 on:
   workflow_dispatch:
     inputs:
-      target_device:
-        description: 'Target device'
+      target_devices:
+        description: 'Target device(s)'
         required: true
         default: 'munch'
         type: choice
@@ -22,6 +22,7 @@ on:
           - 'enuma'
           - 'dagu'
           - 'pipa'
+          - 'all'
 
       system_version:
         description: 'Target System'
@@ -37,12 +38,12 @@ on:
         description: 'KernelSU Version'
         required: true
         type: choice
-        default: 'sukisu-ultra'
+        default: 'ksu'
         options:
-          - 'sukisu-ultra'
           - 'ksu'
           - 'rksu'
           - 'sukisu'
+          - 'sukisu-ultra'
           - 'noksu'
 
       additional_function:
@@ -51,73 +52,158 @@ on:
         type: choice
         default: 'no'
         options:
-          - 'no'
-          - 'susfs-kpm'
           - 'susfs'
           - 'kpm'
+          - 'susfs-kpm'
+          - 'no'
+
+permissions:
+  contents: write
+  actions: write
 
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          DEVICES="${{ github.event.inputs.target_devices }}"
+          if [ "$DEVICES" == "all" ]; then
+            DEVICES="munch,lmi,umi,psyche,thyme,cmi,cas,apollo,alioth,elish,enuma,dagu,pipa"
+          fi
+          DEVICES_JSON="[\"$(echo $DEVICES | sed 's/,/\",\"/g')\"]"
+          echo "matrix={\"device\":$DEVICES_JSON}" >> $GITHUB_OUTPUT
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
+      fail-fast: false
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
 
     steps:
-      - name: Clone Kernel Source
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
+      
       - name: Install Dependencies
         run: |
-          sudo apt-get update -y 
-          sudo apt-get install -y \
-          build-essential git curl wget bison flex zip bc \
-          cpio libssl-dev libncurses-dev gcc \
-          python3 python3-pip ccache
-            
+          sudo apt-get update -y
+          sudo apt-get install -y build-essential git curl wget bison flex zip bc cpio libssl-dev libncurses-dev gcc python3 python3-pip ccache
+
+      - name: Clean workspace
+        run: |
+          rm -rf out/ AnyKernel3*.zip Kernel_*.zip
+          ccache -C
+          rm -rf *.o *.mod *.order *.symvers *.cmd
+          rm -rf toolchain/proton-clang
+          echo "Cleaned workspace"
+
       - name: Cache Proton Clang
         uses: actions/cache@v4
         id: clang-cache
         with:
           path: toolchain/proton-clang
-          key: ${{ runner.os }}-proton-clang
+          key: ${{ runner.os }}-proton-clang-20210522
 
-      - name: Download Proton Clang Toolchain
+      - name: Download Toolchain
         if: steps.clang-cache.outputs.cache-hit != 'true'
         run: |
-          mkdir -p toolchain; cd toolchain
+          mkdir -p toolchain
+          cd toolchain
           wget https://github.com/kdrag0n/proton-clang/archive/refs/tags/20210522.zip
           unzip 20210522.zip
           mv proton-clang-20210522 proton-clang
           rm proton-clang/bin/ld 20210522.zip
-          
+
       - name: Cache ccache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ccache_mikernel
-          key: ${{ runner.os }}-ccache-${{ github.event.inputs.target_device }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-ccache-${{ github.event.inputs.target_device }}-
+          key: ${{ runner.os }}-ccache-${{ matrix.device }}-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-ccache-${{ matrix.device }}-
 
       - name: Build Kernel
         run: |
-          sed -i 's|TOOLCHAIN_PATH=\$HOME/toolchain/proton-clang/bin|TOOLCHAIN_PATH=$(pwd)/toolchain/proton-clang/bin|' build.sh
-          DEVICE="${{ github.event.inputs.target_device }}"
+          sed -i "s|TOOLCHAIN_PATH=\$HOME/toolchain/proton-clang/bin|TOOLCHAIN_PATH=$(pwd)/toolchain/proton-clang/bin|" build.sh
+          bash build.sh "${{ matrix.device }}" "${{ github.event.inputs.kernelsu_version }}" "${{ github.event.inputs.additional_function }}" "${{ github.event.inputs.system_version }}"
+
+      - name: Generate Device Name Mapping
+        id: device_mapping
+        run: |
+          declare -A device_map=(
+            ["psyche"]="Mi12X" ["thyme"]="Mi10S" ["umi"]="Mi10" ["munch"]="K40S"
+            ["lmi"]="K30Pro" ["cmi"]="Mi10Pro" ["cas"]="Mi10Ultra" ["apollo"]="Mi10T-K30SUltra"
+            ["alioth"]="Mi11X-K40" ["elish"]="XiaomiPad5Pro" ["enuma"]="XiaomiPad5Pro5G"
+            ["dagu"]="XiaomiPad5Pro12.4" ["pipa"]="XiaomiPad6"
+          )
+          DEVICE="${{ matrix.device }}"
+          echo "device_name=${device_map[$DEVICE]}" >> $GITHUB_OUTPUT
+          echo "DEVICE_NAME=${device_map[$DEVICE]}" >> $GITHUB_ENV
+
+      - name: Find and Rename Kernel ZIP
+        run: |
+          ZIP_FILE=$(find . -name "Kernel_*_${{ matrix.device }}_*.zip" -print -quit)
+          if [ -z "$ZIP_FILE" ]; then
+            ZIP_FILE=$(find . -name "AnyKernel3_${{ matrix.device }}*.zip" -print -quit)
+          fi
+          if [ -z "$ZIP_FILE" ]; then
+            echo "::error::No kernel file found for ${{ matrix.device }}!"
+            exit 1
+          fi
+          
+          DEVICE_NAME="${{ env.DEVICE_NAME }}"
           SYSTEM="${{ github.event.inputs.system_version }}"
           KSU_VERSION="${{ github.event.inputs.kernelsu_version }}"
-          ADDITIONAL_FUNCTION="${{ github.event.inputs.additional_function }}"
-          bash build.sh "$DEVICE" "$KSU_VERSION" $ADDITIONAL_FUNCTION "$SYSTEM"
+          
+          NEW_NAME="AnyKernel3-$DEVICE_NAME-$SYSTEM.zip"
+          mv "$ZIP_FILE" "$NEW_NAME"
+          
+          echo "ZIP_PATH=$(pwd)/$NEW_NAME" >> $GITHUB_ENV
 
-      - name: Set Kernel Path
-        run: |
-          if [[ "${{ github.event.inputs.system_version }}" == "aosp" || "${{ github.event.inputs.system_version }}" == "miui" ]]; then
-              KernelPath=$(ls Kernel_* 2>/dev/null || true)
-              echo "KernelPath=$(pwd)/$KernelPath" >> $GITHUB_ENV
-          else
-              tar -czvf Kernel_All.tar.gz Kernel_*
-              KernelPath=$(pwd)/Kernel_All.tar.gz
-              echo "KernelPath=$KernelPath" >> $GITHUB_ENV
-          fi
-      
-      - name: Upload Kernel
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Kernel
-          path: ${{ env.KernelPath }}
+          name: ${{ env.DEVICE_NAME }}-${{ github.event.inputs.system_version }}
+          path: ${{ env.ZIP_PATH }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          
+      - name: Prepare Release Files
+        run: |
+          mkdir release
+          find artifacts -name '*.zip' -exec cp {} release \;
+          
+      - name: Set Release Info
+        id: release_info
+        run: |
+          DEVICE_NAMES=$(ls release | cut -d'-' -f1 | sort -u | tr '\n' ',' | sed 's/,$//')
+          echo "device_names=$DEVICE_NAMES" >> $GITHUB_OUTPUT
+          echo "RELEASE_BODY=## Kernel Build\n- **Devices:** $DEVICE_NAMES\n- **System:** ${{ github.event.inputs.system_version }}\n- **KernelSU:** ${{ github.event.inputs.kernelsu_version }}\n- **Build Date:** $(date +%Y-%m-%d)" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: AnyKernel3_${{ steps.release_info.outputs.device_names }}
+          tag_name: kernel-${{ github.run_id }}
+          body: ${{ env.RELEASE_BODY }}
+          files: release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Clean workspace
+        if: ${{ always() }}
+        run: |
+          rm -rf artifacts release
+          echo "Cleaned workspace after release"
