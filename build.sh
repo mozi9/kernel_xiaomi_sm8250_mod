@@ -157,7 +157,12 @@ Build_AOSP(){
 
     SET_CONFIG
  
-    (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
+(
+    echo > .scmversion
+    scripts/config --file out/.config \
+        -d LOCALVERSION_AUTO \
+        --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}-"
+) >/dev/null
 
     export KBUILD_BUILD_USER="酷安" 
     export KBUILD_BUILD_HOST="宝明v"
@@ -242,7 +247,12 @@ Build_MIUI(){
 
     SET_CONFIG MIUI
 
-    (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
+(
+    echo > .scmversion
+    scripts/config --file out/.config \
+        -d LOCALVERSION_AUTO \
+        --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}-"
+) >/dev/null
 
     export KBUILD_BUILD_USER="酷安" 
     export KBUILD_BUILD_HOST="宝明v"
