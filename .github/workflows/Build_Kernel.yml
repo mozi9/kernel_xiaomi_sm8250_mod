@@ -56,12 +56,6 @@ on:
           - 'kpm'
           - 'susfs-kpm'
           - 'no'
-          
-      version:  # 新增自定义版本字段
-        description: 'Custom Kernel Version (optional)'
-        required: false
-        type: string
-        default: ''
 
 permissions:
   contents: write
@@ -133,13 +127,6 @@ jobs:
           key: ${{ runner.os }}-ccache-${{ matrix.device }}-${{ github.sha }}
           restore-keys: ${{ runner.os }}-ccache-${{ matrix.device }}-
 
-      - name: Set Kernel Version  # 新增：设置自定义内核版本
-        if: ${{ github.event.inputs.version != '' }}
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          echo "🔧 Setting custom kernel version: $VERSION"
-          sed -i "s/-dirty/-$VERSION/g" scripts/setlocalversion
-
       - name: Build Kernel
         run: |
           sed -i "s|TOOLCHAIN_PATH=\$HOME/toolchain/proton-clang/bin|TOOLCHAIN_PATH=$(pwd)/toolchain/proton-clang/bin|" build.sh
@@ -173,13 +160,7 @@ jobs:
           SYSTEM="${{ github.event.inputs.system_version }}"
           KSU_VERSION="${{ github.event.inputs.kernelsu_version }}"
           
-          # 添加版本信息到文件名（如果设置了自定义版本）
-          VERSION_SUFFIX=""
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            VERSION_SUFFIX="-${{ github.event.inputs.version }}"
-          fi
-          
-          NEW_NAME="AnyKernel3-$DEVICE_NAME-$SYSTEM$VERSION_SUFFIX.zip"
+          NEW_NAME="AnyKernel3-$DEVICE_NAME-$SYSTEM.zip"
           mv "$ZIP_FILE" "$NEW_NAME"
           
           echo "ZIP_PATH=$(pwd)/$NEW_NAME" >> $GITHUB_ENV
@@ -208,13 +189,8 @@ jobs:
         id: release_info
         run: |
           DEVICE_NAMES=$(ls release | cut -d'-' -f1 | sort -u | tr '\n' ',' | sed 's/,$//')
-          VERSION_INFO=""
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            VERSION_INFO="\n- **Kernel Version:** ${{ github.event.inputs.version }}"
-          fi
-          
           echo "device_names=$DEVICE_NAMES" >> $GITHUB_OUTPUT
-          echo "RELEASE_BODY=## Kernel Build\n- **Devices:** $DEVICE_NAMES\n- **System:** ${{ github.event.inputs.system_version }}\n- **KernelSU:** ${{ github.event.inputs.kernelsu_version }}$VERSION_INFO\n- **Build Date:** $(date +%Y-%m-%d)" >> $GITHUB_ENV
+          echo "RELEASE_BODY=## Kernel Build\n- **Devices:** $DEVICE_NAMES\n- **System:** ${{ github.event.inputs.system_version }}\n- **KernelSU:** ${{ github.event.inputs.kernelsu_version }}\n- **Build Date:** $(date +%Y-%m-%d)" >> $GITHUB_ENV
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
