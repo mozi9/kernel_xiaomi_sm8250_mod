@@ -57,6 +57,13 @@ on:
           - 'susfs-kpm'
           - 'no'
 
+      # 添加自定义内核版本参数
+      kernel_version:
+        description: 'Custom Kernel Version (e.g., 5.10.123)'
+        required: false
+        default: ''
+        type: string
+
 permissions:
   contents: write
   actions: write
@@ -86,6 +93,8 @@ jobs:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
       CCACHE_NOHASHDIR: "true"
       CCACHE_HARDLINK: "true"
+      # 设置内核版本环境变量
+      KERNEL_VERSION: ${{ github.event.inputs.kernel_version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -127,6 +136,18 @@ jobs:
           key: ${{ runner.os }}-ccache-${{ matrix.device }}-${{ github.sha }}
           restore-keys: ${{ runner.os }}-ccache-${{ matrix.device }}-
 
+      # 添加自定义内核版本处理步骤
+      - name: Set custom kernel version
+        if: ${{ env.KERNEL_VERSION != '' }}
+        run: |
+          echo "Using custom kernel version: $KERNEL_VERSION"
+          # 在这里添加修改内核版本的实际命令
+          # 例如：sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"-$KERNEL_VERSION\"/" arch/arm64/configs/vendor/${{ matrix.device }}_defconfig
+          # 具体实现取决于你的内核配置方式
+          echo "KERNEL_VERSION=$KERNEL_VERSION" >> $GITHUB_ENV
+        env:
+          KERNEL_VERSION: ${{ github.event.inputs.kernel_version }}
+
       - name: Build Kernel
         run: |
           sed -i "s|TOOLCHAIN_PATH=\$HOME/toolchain/proton-clang/bin|TOOLCHAIN_PATH=$(pwd)/toolchain/proton-clang/bin|" build.sh
@@ -160,7 +181,14 @@ jobs:
           SYSTEM="${{ github.event.inputs.system_version }}"
           KSU_VERSION="${{ github.event.inputs.kernelsu_version }}"
           
-          NEW_NAME="AnyKernel3-$DEVICE_NAME-$SYSTEM.zip"
+          # 添加内核版本到文件名
+          if [ -n "${{ env.KERNEL_VERSION }}" ]; then
+            KERNEL_VERSION="${{ env.KERNEL_VERSION }}"
+            NEW_NAME="AnyKernel3-$DEVICE_NAME-$SYSTEM-$KERNEL_VERSION.zip"
+          else
+            NEW_NAME="AnyKernel3-$DEVICE_NAME-$SYSTEM.zip"
+          fi
+          
           mv "$ZIP_FILE" "$NEW_NAME"
           
           echo "ZIP_PATH=$(pwd)/$NEW_NAME" >> $GITHUB_ENV
@@ -189,8 +217,15 @@ jobs:
         id: release_info
         run: |
           DEVICE_NAMES=$(ls release | cut -d'-' -f1 | sort -u | tr '\n' ',' | sed 's/,$//')
-          echo "device_names=$DEVICE_NAMES" >> $GITHUB_OUTPUT
-          echo "RELEASE_BODY=## Kernel Build\n- **Devices:** $DEVICE_NAMES\n- **System:** ${{ github.event.inputs.system_version }}\n- **KernelSU:** ${{ github.event.inputs.kernelsu_version }}\n- **Build Date:** $(date +%Y-%m-%d)" >> $GITHUB_ENV
+          
+          # 添加内核版本到发布信息
+          KERNEL_VERSION="${{ github.event.inputs.kernel_version }}"
+          VERSION_INFO=""
+          if [ -n "$KERNEL_VERSION" ]; then
+            VERSION_INFO="- **Kernel Version:** $KERNEL_VERSION\n"
+          fi
+          
+          echo "RELEASE_BODY=## Kernel Build\n- **Devices:** $DEVICE_NAMES\n- **System:** ${{ github.event.inputs.system_version }}\n- **KernelSU:** ${{ github.event.inputs.kernelsu_version }}\n$VERSION_INFO- **Build Date:** $(date +%Y-%m-%d)" >> $GITHUB_ENV
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
