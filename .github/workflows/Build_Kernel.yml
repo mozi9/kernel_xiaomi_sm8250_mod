@@ -56,12 +56,12 @@ on:
           - 'kpm'
           - 'susfs-kpm'
           - 'no'
-
-      kernel_version:
-        description: 'Custom Kernel Version'
+          
+      version:  # 新增自定义版本字段
+        description: 'Custom Kernel Version (optional)'
         required: false
-        default: ''
         type: string
+        default: ''
 
 permissions:
   contents: write
@@ -92,7 +92,6 @@ jobs:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
       CCACHE_NOHASHDIR: "true"
       CCACHE_HARDLINK: "true"
-      KERNEL_VERSION: ${{ github.event.inputs.kernel_version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -134,48 +133,15 @@ jobs:
           key: ${{ runner.os }}-ccache-${{ matrix.device }}-${{ github.sha }}
           restore-keys: ${{ runner.os }}-ccache-${{ matrix.device }}-
 
-      - name: Set custom kernel version
-        if: ${{ env.KERNEL_VERSION != '' }}
+      - name: Set Kernel Version  # 新增：设置自定义内核版本
+        if: ${{ github.event.inputs.version != '' }}
         run: |
-          echo "🔧 设置自定义内核版本: $KERNEL_VERSION"
-          V1=$(echo $KERNEL_VERSION | cut -d. -f1)
-          V2=$(echo $KERNEL_VERSION | cut -d. -f2)
-          V3=$(echo $KERNEL_VERSION | cut -d. -f3)
-          
-          sed -i "s/^VERSION =.*/VERSION = $V1/" Makefile
-          sed -i "s/^PATCHLEVEL =.*/PATCHLEVEL = $V2/" Makefile
-          sed -i "s/^SUBLEVEL =.*/SUBLEVEL = $V3/" Makefile
-          sed -i "s/^EXTRAVERSION =.*/EXTRAVERSION =/" Makefile
-          
-          sed -i "s|UTS_VERSION.*|UTS_VERSION \"Linux version $KERNEL_VERSION (runner@\$(KBUILD_HOSTNAME)) (\$(CONFIG_CC_VERSION_TEXT)) \#\$(KERNEL_BUILD_VERSION) \$(shell . \$(srctree)\/scripts\/setlocalversion; echo \$(LOCALVERSION))\"|" init/version.c
-          
-          for config in arch/arm64/configs/vendor/*_defconfig; do
-            sed -i "s/CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"-$KERNEL_VERSION\"/" $config
-          done
-          
-          if ! grep -q "KERNEL_BUILD_VERSION" Makefile; then
-            echo "KERNEL_BUILD_VERSION = 1" >> Makefile
-          fi
-          
-          echo "---- 更新后的 Makefile 版本设置 ----"
-          grep -E "^(VERSION|PATCHLEVEL|SUBLEVEL|EXTRAVERSION) =" Makefile
-          echo "---------------------------------"
-          
-          echo "---- init/version.c 修改 ----"
-          grep "UTS_VERSION" init/version.c
-          echo "---------------------------"
-        env:
-          KERNEL_VERSION: ${{ github.event.inputs.kernel_version }}
+          VERSION="${{ github.event.inputs.version }}"
+          echo "🔧 Setting custom kernel version: $VERSION"
+          sed -i "s/-dirty/-$VERSION/g" scripts/setlocalversion
 
       - name: Build Kernel
         run: |
-          if grep -q "KERNEL_BUILD_VERSION" Makefile; then
-            CURRENT_BUILD=$(grep "KERNEL_BUILD_VERSION" Makefile | cut -d' ' -f3)
-            NEXT_BUILD=$((CURRENT_BUILD + 1))
-            sed -i "s/KERNEL_BUILD_VERSION =.*/KERNEL_BUILD_VERSION = $NEXT_BUILD/" Makefile
-            echo "更新构建版本号: $CURRENT_BUILD → $NEXT_BUILD"
-          fi
-          
           sed -i "s|TOOLCHAIN_PATH=\$HOME/toolchain/proton-clang/bin|TOOLCHAIN_PATH=$(pwd)/toolchain/proton-clang/bin|" build.sh
           bash build.sh "${{ matrix.device }}" "${{ github.event.inputs.kernelsu_version }}" "${{ github.event.inputs.additional_function }}" "${{ github.event.inputs.system_version }}"
 
@@ -207,13 +173,13 @@ jobs:
           SYSTEM="${{ github.event.inputs.system_version }}"
           KSU_VERSION="${{ github.event.inputs.kernelsu_version }}"
           
-          if [ -n "${{ env.KERNEL_VERSION }}" ]; then
-            KERNEL_VERSION="${{ env.KERNEL_VERSION }}"
-            NEW_NAME="AnyKernel3-$DEVICE_NAME-$SYSTEM-$KERNEL_VERSION.zip"
-          else
-            NEW_NAME="AnyKernel3-$DEVICE_NAME-$SYSTEM.zip"
+          # 添加版本信息到文件名（如果设置了自定义版本）
+          VERSION_SUFFIX=""
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION_SUFFIX="-${{ github.event.inputs.version }}"
           fi
           
+          NEW_NAME="AnyKernel3-$DEVICE_NAME-$SYSTEM$VERSION_SUFFIX.zip"
           mv "$ZIP_FILE" "$NEW_NAME"
           
           echo "ZIP_PATH=$(pwd)/$NEW_NAME" >> $GITHUB_ENV
@@ -242,12 +208,13 @@ jobs:
         id: release_info
         run: |
           DEVICE_NAMES=$(ls release | cut -d'-' -f1 | sort -u | tr '\n' ',' | sed 's/,$//')
-          KERNEL_VERSION="${{ github.event.inputs.kernel_version }}"
           VERSION_INFO=""
-          if [ -n "$KERNEL_VERSION" ]; then
-            VERSION_INFO="- **Kernel Version:** $KERNEL_VERSION\n"
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION_INFO="\n- **Kernel Version:** ${{ github.event.inputs.version }}"
           fi
-          echo "RELEASE_BODY=## Kernel Build\n- **Devices:** $DEVICE_NAMES\n- **System:** ${{ github.event.inputs.system_version }}\n- **KernelSU:** ${{ github.event.inputs.kernelsu_version }}\n$VERSION_INFO- **Build Date:** $(date +%Y-%m-%d)" >> $GITHUB_ENV
+          
+          echo "device_names=$DEVICE_NAMES" >> $GITHUB_OUTPUT
+          echo "RELEASE_BODY=## Kernel Build\n- **Devices:** $DEVICE_NAMES\n- **System:** ${{ github.event.inputs.system_version }}\n- **KernelSU:** ${{ github.event.inputs.kernelsu_version }}$VERSION_INFO\n- **Build Date:** $(date +%Y-%m-%d)" >> $GITHUB_ENV
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
