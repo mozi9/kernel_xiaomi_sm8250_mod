@@ -157,17 +157,10 @@ Build_AOSP(){
 
     SET_CONFIG
  
-(
-    echo > .scmversion
-    scripts/config --file out/.config \
-        -d LOCALVERSION_AUTO \
-        --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}-"
-) >/dev/null
+    (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
 
-    export KBUILD_BUILD_USER="酷安" 
-    export KBUILD_BUILD_HOST="宝明v"
-    export KBUILD_BUILD_TIMESTAMP="$(TZ='Asia/Shanghai' date +'%a %b %d %H:%M:%S CST %Y')"
-   
+    export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
+
     make $MAKE_ARGS -j$(nproc)
     
     Image_Repack
@@ -247,16 +240,9 @@ Build_MIUI(){
 
     SET_CONFIG MIUI
 
-(
-    echo > .scmversion
-    scripts/config --file out/.config \
-        -d LOCALVERSION_AUTO \
-        --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}-"
-) >/dev/null
+    (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
 
-    export KBUILD_BUILD_USER="酷安" 
-    export KBUILD_BUILD_HOST="宝明v"
-    export KBUILD_BUILD_TIMESTAMP="$(TZ='Asia/Shanghai' date +'%a %b %d %H:%M:%S CST %Y')"
+    export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
 
     make $MAKE_ARGS -j$(nproc)
 
@@ -386,117 +372,8 @@ Image_Repack(){
 
     cp out/arch/arm64/boot/Image anykernel/kernels/
     cp out/arch/arm64/boot/dtb anykernel/kernels/
-    
-    # ===================== 1. 创建启动警告脚本 =====================
-    echo "创建启动警告脚本..."
-    
-    # 确保必要的目录存在
-    mkdir -p anykernel/ramdisk/sbin
-    
-    # 创建并写入 init.rc 脚本
-    cat > anykernel/ramdisk/sbin/init.rc << 'EOF'
-#!/system/bin/sh
-
-# 内核启动警告信息
-echo "**************************************************"
-echo "* 警告：本内核由宝明构建，严禁倒卖！              *"
-echo "* Resale of this kernel is strictly forbidden!   *"
-echo "**************************************************"
-echo "* 编译时间: $(date)                             *"
-echo "* 设备型号: $TARGET_DEVICE                        *"
-echo "* 版本号: ${GIT_COMMIT_ID}                      *"
-echo "**************************************************"
-sleep 3
-EOF
-    
-    # 设置可执行权限
-    chmod 755 anykernel/ramdisk/sbin/init.rc
-    
-    # 确保内核配置支持打印这些消息
-    scripts/config --file out/.config \
-        -e CONFIG_PRINTK \
-        --set-str CONFIG_CONSOLE_LOGLEVEL_DEFAULT "7" \
-        --set-str CONFIG_MESSAGE_LOGLEVEL_DEFAULT "7"
-    
-    echo "启动警告脚本创建完成"
-    # ===================== 启动警告脚本结束 =====================
-
-    # ===================== 2. 添加版权声明文件 =====================
-    echo "添加版权声明文件到刷机包..."
-    
-    # 1. 创建详细的版权声明文件
-    cat > anykernel/copyright.txt << EOF
-/******************************************************************************
- *                        Kernel Copyright Notice                            *
- *                                                                           *
- * 本内核由宝明(Baoming)开发，基于GPLv2许可证发布。                           *
- * 严禁未经授权的商业倒卖行为！                                              *
- *                                                                            *
- * This kernel was developed by Baoming and is released under the GPLv2      *
- * license. Commercial resale without authorization is strictly prohibited!  *
- *                                                                            *
- * 编译信息:                                                                  *
- * - 设备: ${TARGET_DEVICE}                                                  *
- * - 时间: $(date +'%Y-%m-%d %H:%M:%S %Z')                                   *
- * - 版本: ${GIT_COMMIT_ID}                                                  *
- *                                                                            *
- * 重要声明:                                                                  *
- * 1. 本内核仅供个人学习使用，禁止商业倒卖                                    *
- * 2. 倒卖行为将承担法律责任                                                  *
- * 3. 如需商业合作，请联系作者: baoming@kernel.org                           *
- *                                                                            *
- * 版权所有 © 2023 Baoming Kernel Project. 保留所有权利。                     *
- ******************************************************************************/
-EOF
-    
-    # 2. 创建简明的声明文件
-    echo "本内核由宝明构建，严禁倒卖！违者必究！" > anykernel/严禁倒卖.txt
-    
-    # 3. 创建英文版声明
-    echo "Built by Baoming. Resale is strictly prohibited!" > anykernel/no_resale.txt
-    
-    echo "版权声明文件添加完成"
-    # ===================== 版权声明结束 =====================
-
-    # ===================== 3. 增强版权保护 =====================
-    echo "添加额外版权保护措施..."
-    
-    # 1. 在启动脚本中添加版权声明
-    echo "echo '本内核版权归宝明所有，严禁倒卖！'" >> anykernel/ramdisk/sbin/init.rc
-    
-    # 2. 在ZIP包描述中添加警告
-    sed -i 's/# kernel.name=/kernel.name=宝明内核（严禁倒卖！）/g' anykernel/anykernel.sh
-    
-    # 3. 添加内核模块版权信息
-    for ko_file in $(find out -name "*.ko"); do
-        echo -e "\nMODULE_LICENSE(\"GPL v2\");" >> $ko_file
-        echo "MODULE_DESCRIPTION(\"© Baoming Kernel - Resale Forbidden\");" >> $ko_file
-    done
-    
-    echo "额外版权保护措施完成"
-    # ===================== 增强保护结束 =====================
 
     cd anykernel 
-    
-    # ===================== 4. 添加版权到打包过程 =====================
-    # 在打包时添加版权声明
-    echo "在打包过程中添加版权声明..."
-    
-    # 1. 创建打包信息文件
-    cat > build_info.txt << EOF
-[Baoming Kernel Build Information]
-Build Date: $(date)
-Target Device: ${TARGET_DEVICE}
-Git Commit: ${GIT_COMMIT_ID}
-Builder: 宝明
-Warning: Resale is strictly prohibited!
-EOF
-    
-    # 2. 在anykernel.sh脚本中添加版权声明
-    sed -i '1i # 本刷机包版权归宝明所有，严禁倒卖！' anykernel.sh
-    
-    echo "打包版权声明添加完成"
-    # ===================== 打包版权结束 =====================
 
     if [ "$1" == "MIUI" ]; then
         ZIP_FILENAME=Kernel_MIUI_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
