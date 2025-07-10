@@ -138,22 +138,44 @@ jobs:
         if: ${{ env.KERNEL_VERSION != '' }}
         run: |
           echo "🔧 设置自定义内核版本: $KERNEL_VERSION"
-          sed -i "s/^VERSION =.*/VERSION = $(echo $KERNEL_VERSION | cut -d. -f1)/" Makefile
-          sed -i "s/^PATCHLEVEL =.*/PATCHLEVEL = $(echo $KERNEL_VERSION | cut -d. -f2)/" Makefile
-          sed -i "s/^SUBLEVEL =.*/SUBLEVEL = $(echo $KERNEL_VERSION | cut -d. -f3)/" Makefile
+          V1=$(echo $KERNEL_VERSION | cut -d. -f1)
+          V2=$(echo $KERNEL_VERSION | cut -d. -f2)
+          V3=$(echo $KERNEL_VERSION | cut -d. -f3)
+          
+          sed -i "s/^VERSION =.*/VERSION = $V1/" Makefile
+          sed -i "s/^PATCHLEVEL =.*/PATCHLEVEL = $V2/" Makefile
+          sed -i "s/^SUBLEVEL =.*/SUBLEVEL = $V3/" Makefile
           sed -i "s/^EXTRAVERSION =.*/EXTRAVERSION =/" Makefile
-          sed -i "s/-dirty/-$KERNEL_VERSION/g" scripts/setlocalversion
+          
+          sed -i "s|UTS_VERSION.*|UTS_VERSION \"Linux version $KERNEL_VERSION (runner@\$(KBUILD_HOSTNAME)) (\$(CONFIG_CC_VERSION_TEXT)) \#\$(KERNEL_BUILD_VERSION) \$(shell . \$(srctree)\/scripts\/setlocalversion; echo \$(LOCALVERSION))\"|" init/version.c
+          
           for config in arch/arm64/configs/vendor/*_defconfig; do
             sed -i "s/CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"-$KERNEL_VERSION\"/" $config
           done
+          
+          if ! grep -q "KERNEL_BUILD_VERSION" Makefile; then
+            echo "KERNEL_BUILD_VERSION = 1" >> Makefile
+          fi
+          
           echo "---- 更新后的 Makefile 版本设置 ----"
           grep -E "^(VERSION|PATCHLEVEL|SUBLEVEL|EXTRAVERSION) =" Makefile
           echo "---------------------------------"
+          
+          echo "---- init/version.c 修改 ----"
+          grep "UTS_VERSION" init/version.c
+          echo "---------------------------"
         env:
           KERNEL_VERSION: ${{ github.event.inputs.kernel_version }}
 
       - name: Build Kernel
         run: |
+          if grep -q "KERNEL_BUILD_VERSION" Makefile; then
+            CURRENT_BUILD=$(grep "KERNEL_BUILD_VERSION" Makefile | cut -d' ' -f3)
+            NEXT_BUILD=$((CURRENT_BUILD + 1))
+            sed -i "s/KERNEL_BUILD_VERSION =.*/KERNEL_BUILD_VERSION = $NEXT_BUILD/" Makefile
+            echo "更新构建版本号: $CURRENT_BUILD → $NEXT_BUILD"
+          fi
+          
           sed -i "s|TOOLCHAIN_PATH=\$HOME/toolchain/proton-clang/bin|TOOLCHAIN_PATH=$(pwd)/toolchain/proton-clang/bin|" build.sh
           bash build.sh "${{ matrix.device }}" "${{ github.event.inputs.kernelsu_version }}" "${{ github.event.inputs.additional_function }}" "${{ github.event.inputs.system_version }}"
 
