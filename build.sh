@@ -133,14 +133,6 @@ elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-    
-    if [ -f "KernelSU/CMakeLists.txt" ]; then
-        echo "修改 KernelSU 版本信息..."
-        sed -i 's|-- SukiSU-Ultra version (Github):.*|-- SukiSU-Ultra version (Github): v3.1.7-小黑子制作@QQ2990172005|' KernelSU/CMakeLists.txt
-    else
-        echo "警告: KernelSU/CMakeLists.txt 不存在，无法修改版本信息"
-    fi
-    
 elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
@@ -170,6 +162,14 @@ Build_AOSP(){
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
 
     make $MAKE_ARGS -j$(nproc)
+
+    if [ -f "out/CMakeCache.txt" ]; then
+        echo "=== 正在修改 KernelSU 版本信息 ==="
+        sed -i 's|SukiSU-Ultra version (Github):.*|SukiSU-Ultra version (Github): v3.1.7-小黑子制作@QQ2990172005|' out/CMakeCache.txt
+        echo "=== 版本信息修改完成 ==="
+    else
+        echo "警告: out/CMakeCache.txt 不存在，跳过版本修改"
+    fi
     
     Image_Repack
 
@@ -253,6 +253,14 @@ Build_MIUI(){
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
 
     make $MAKE_ARGS -j$(nproc)
+
+    if [ -f "out/CMakeCache.txt" ]; then
+        echo "=== 正在修改 KernelSU 版本信息 ==="
+        sed -i 's|SukiSU-Ultra version (Github):.*|SukiSU-Ultra version (Github): v3.1.7-小黑子制作@QQ2990172005|' out/CMakeCache.txt
+        echo "=== 版本信息修改完成 ==="
+    else
+        echo "警告: out/CMakeCache.txt 不存在，跳过版本修改"
+    fi
 
     Image_Repack MIUI
     # ------------- End of Building for MIUI -------------
