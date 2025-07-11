@@ -1,43 +1,47 @@
-name: Clear All Caches Immediately
-
-on:
-  workflow_dispatch:  # 仅手动触发
+name: Complete Full Cleanup
+on: 
+  workflow_dispatch:
 
 permissions:
-  actions: write  # 必须拥有缓存写入权限
+  actions: write
+  contents: write
 
 jobs:
-  nuke-caches:
-    name: Delete All Caches
+  cleanup:
     runs-on: ubuntu-latest
     steps:
-      - name: Delete all cache entries
+      - name: Delete all caches
         uses: actions/github-script@v6
         with:
           script: |
             const { owner, repo } = context.repo;
-            
-            // 获取所有缓存对象
-            const response = await github.rest.actions.getActionsCacheList({ 
-              owner, 
+            const caches = await github.paginate(github.rest.actions.getActionsCacheList, { owner, repo });
+            await Promise.all(caches.map(cache => github.rest.actions.deleteActionsCacheById({
+              owner,
               repo,
-              per_page: 100
-            });
-            
-            // 提取所有缓存的ID
-            const cacheIds = response.data.actions_caches.map(cache => cache.id);
-            
-            // 并行删除所有缓存（快速高效）
-            const deletePromises = cacheIds.map(cacheId => 
-              github.rest.actions.deleteActionsCacheById({
-                owner,
-                repo,
-                cache_id: cacheId
-              })
-            );
-            
-            // 等待所有删除操作完成
-            await Promise.all(deletePromises);
-            
-            // 简单确认消息
-            return `Deleted ${cacheIds.length} caches`;
+              cache_id: cache.id
+            })));
+
+      - name: Delete all releases
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const releases = await github.paginate(github.rest.repos.listReleases, { owner, repo });
+            await Promise.all(releases.map(release => github.rest.repos.deleteRelease({
+              owner,
+              repo,
+              release_id: release.id
+            })));
+
+      - name: Delete all tags
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const tags = await github.paginate(github.rest.repos.listTags, { owner, repo });
+            await Promise.all(tags.map(tag => github.rest.git.deleteRef({
+              owner,
+              repo,
+              ref: `tags/${tag.name}`
+            })));
