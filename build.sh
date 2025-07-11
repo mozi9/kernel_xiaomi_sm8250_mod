@@ -130,10 +130,14 @@ elif [ "$KSU_VERSION" == "sukisu" ]; then
     echo "SukiSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s dev
 elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
-  KSU_ZIP_STR="SukiSU-Ultra"
-  echo "SukiSU-Ultra version (GitHub): v3.1.7-作者小黑子@QQ2990172005"
-  echo "SukiSU-Ultra && SuSFS is enabled"
-  curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+    KSU_ZIP_STR="SukiSU-Ultra"
+    # 屏蔽原版版本输出
+    # curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+    echo "SukiSU-Ultra version (GitHub): v3.1.7-作者小黑子@QQ2990172005"
+    echo "SukiSU-Ultra && SuSFS is enabled"
+    # 使用本地修改过的 setup.sh（需提前下载并修改）
+    # 或者确保远程仓库的 setup.sh 已更新
+    curl -LSs "https://raw.githubusercontent.com/你的fork/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
 fi
