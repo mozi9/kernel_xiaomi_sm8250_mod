@@ -133,10 +133,6 @@ elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-    echo "=== 修改 KernelSU 版本信息 ==="
-    find KernelSU -type f -name 'CMakeLists.txt' -exec sed -i 's|set(GITHUB_VERSION .*|set(GITHUB_VERSION "v3.1.7-小黑子制作@QQ2990172005")|' {} +
-    echo "=== 版本修改完成 ==="
-
 elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
