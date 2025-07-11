@@ -1,0 +1,44 @@
+name: Daily Silent Cache Cleaner
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # 每天UTC时间3点运行（北京时间11点）
+  workflow_dispatch:      # 手动触发按钮
+
+permissions:
+  actions: write  # 仅需要写入缓存的权限
+
+jobs:
+  silent-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clean all caches older than 1 day
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const now = new Date();
+            const oneDayAgo = new Date(now);
+            oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+            
+            // 获取所有缓存（按最旧先排序）
+            const caches = await github.paginate(
+              github.rest.actions.getActionsCacheList,
+              { owner, repo, sort: 'last_accessed_at', direction: 'asc' }
+            );
+            
+            // 清理超过1天的缓存（包括图中的"yesterday"缓存）
+            for (const cache of caches) {
+              const lastUsed = new Date(cache.last_accessed_at);
+              
+              // 专注于清理：忽略存储状态，只关心缓存年龄
+              if (lastUsed < oneDayAgo) {
+                await github.rest.actions.deleteActionsCacheById({
+                  owner,
+                  repo,
+                  cache_id: cache.id
+                });
+              }
+            }
+            
+            console.log('✅ Silent cleanup completed');
