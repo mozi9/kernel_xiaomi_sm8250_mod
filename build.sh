@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 # ===== 在 build.sh 的 Image_Repack 函数开头添加 =====
 Image_Repack() {
     # 1. 确保内核文件存在
