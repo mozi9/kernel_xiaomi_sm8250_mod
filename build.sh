@@ -1,62 +1,33 @@
 #!/bin/bash
-
-# ===== 在 build.sh 的 Image_Repack 函数开头添加 =====
-Image_Repack() {
-    # 1. 确保内核文件存在
-    KERNEL_IMAGE="out/arch/arm64/boot/Image"
-    if [ ! -f "$KERNEL_IMAGE" ]; then
-        echo "错误：内核文件未找到！"
-        exit 1
-    fi
-
-    # 2. 定义目标版本信息
-    OLD_VERSION="v3.1.7-0b03cd9f@susfs-main"
-    NEW_VERSION="v3.1.7-作者小黑子@QQ2990172005"
-    
-    # 3. 创建临时副本进行修改
-    cp "$KERNEL_IMAGE" "${KERNEL_IMAGE}.orig"
-    
-    # 4. 计算偏移量
-    echo "定位版本字符串位置..."
-    OFFSET=$(strings -t x "${KERNEL_IMAGE}.orig" | \
-             grep -F "$OLD_VERSION" | \
-             head -1 | \
-             cut -d' ' -f1)
-    
-    if [ -z "$OFFSET" ]; then
-        echo "错误：未找到目标版本字符串 '$OLD_VERSION'"
-        exit 1
-    fi
-    
-    # 5. 直接二进制修改（工业级方法）
-    echo "在偏移 0x$OFFSET 处修改内核二进制..."
-    printf "%s" "$NEW_VERSION" | \
-        dd of="$KERNEL_IMAGE" \
-           bs=1 \
-           seek=$((0x$OFFSET)) \
-           conv=notrunc \
-           2>/dev/null
-    
-    # 6. 验证修改
-    echo "验证修改结果..."
-    strings "$KERNEL_IMAGE" | grep -F "$NEW_VERSION"
-    if [ $? -ne 0 ]; then
-        echo "错误：修改未生效，恢复原始文件"
-        mv "${KERNEL_IMAGE}.orig" "$KERNEL_IMAGE"
-        exit 1
-    fi
-    
-    # 7. 清理临时文件
-    rm "${KERNEL_IMAGE}.orig"
-    
-    # 以下是原始 Image_Repack 函数的其余内容...
-    # [原始代码保持不变]
-
-
 # Some logics of this script are copied from [scripts/build_kernel]. Thanks to UtsavBalar1231.
-
 # Ensure the script exits on error
 set -e
+# ===== 添加版本替换函数 =====
+replace_sukisu_version() {
+    # 定义目标版本和自定义版本
+    local OLD_VERSION="v3.1.7-0b03cd9f@susfs-main"
+    local NEW_VERSION="v3.1.7-作者小黑子@QQ2990172005"
+    
+    echo "正在强制替换 SukiSU-Ultra 版本信息..."
+    
+    # 确保 KernelSU 目录存在
+    if [ ! -d "KernelSU" ]; then
+        echo "错误：KernelSU 目录不存在，无法替换版本信息"
+        return 1
+    fi
+    
+    # 强制替换所有文本文件中的版本信息
+    find KernelSU -type f -exec grep -Iq . {} \; -exec sed -i \
+        -e "s|${OLD_VERSION}|${NEW_VERSION}|g" \
+        -e "s|SukiSU-Ultra version.*|SukiSU-Ultra version (GitHub): ${NEW_VERSION}|g" \
+        -e "s|sukisu-ultra:.*|sukisu-ultra: ${NEW_VERSION}|g" \
+        {} +
+    
+    # 添加版本标记文件
+    echo "${NEW_VERSION}" > KernelSU/.custom_version
+    echo "版本替换完成！"
+}
+# ===== 函数结束 =====
 
 TOOLCHAIN_PATH=$HOME/toolchain/proton-clang/bin
 GIT_COMMIT_ID=$(git rev-parse --short=13 HEAD)
