@@ -1,19 +1,19 @@
-name: Clear All Caches When Over Limit
+name: Cache Manager
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # 每 6 小时运行一次（UTC 时间）
-  workflow_dispatch:        # 支持手动触发
+    - cron: '0 */6 * * *'  # 每6小时运行一次
+  workflow_dispatch:
 
 permissions:
   actions: write
 
 jobs:
-  clear-all-caches:
+  manage-caches:
     runs-on: ubuntu-latest
     steps:
-      - name: Count current caches
-        id: cache-counter
+      - name: Count caches
+        id: cache-count
         uses: actions/github-script@v6
         with:
           script: |
@@ -22,25 +22,28 @@ jobs:
               github.rest.actions.getActionsCacheList,
               { owner, repo, per_page: 100 }
             );
-            return caches.length;
-          result-encoding: number
-        
+            return `CacheCount=${caches.length}`;  # 返回字符串格式
+          result-encoding: string
+
+      - name: Extract cache count
+        id: extract-count
+        run: |
+          # 从字符串中提取数字
+          COUNT=$(echo "${{ steps.cache-count.outputs.result }}" | cut -d '=' -f 2)
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
       - name: Clear all caches if over 13
-        if: ${{ steps.cache-counter.outputs.result > 13 }}
+        if: ${{ steps.extract-count.outputs.count > 13 }}
         uses: actions/github-script@v6
         with:
           script: |
             const { owner, repo } = context.repo;
-            
-            // 获取所有缓存
             const caches = await github.paginate(
               github.rest.actions.getActionsCacheList,
               { owner, repo, per_page: 100 }
             );
             
-            console.log(`⚠️ Clearing ${caches.length} caches (threshold exceeded)`);
-            
-            // 并行删除所有缓存（加速操作）
+            // 并行删除所有缓存
             await Promise.all(caches.map(cache => 
               github.rest.actions.deleteActionsCacheById({
                 owner,
@@ -49,4 +52,4 @@ jobs:
               })
             ));
             
-            console.log('✅ All caches cleared');
+            return `Cleared ${caches.length} caches`;
