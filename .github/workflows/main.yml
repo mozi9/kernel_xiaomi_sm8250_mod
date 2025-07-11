@@ -1,55 +1,43 @@
-name: Cache Manager
+name: Clear All Caches Immediately
 
 on:
-  schedule:
-    - cron: '0 */6 * * *'  # 每6小时运行一次
-  workflow_dispatch:
+  workflow_dispatch:  # 仅手动触发
 
 permissions:
-  actions: write
+  actions: write  # 必须拥有缓存写入权限
 
 jobs:
-  manage-caches:
+  nuke-caches:
+    name: Delete All Caches
     runs-on: ubuntu-latest
     steps:
-      - name: Get cache count
-        id: cache-count
+      - name: Delete all cache entries
         uses: actions/github-script@v6
         with:
           script: |
-            // 简化的缓存计数脚本
-            try {
-              const { owner, repo } = context.repo;
-              const response = await github.rest.actions.getActionsCacheList({ owner, repo });
-              const count = response.data.total_count;
-              return `CacheCount=${count}`;
-            } catch (error) {
-              core.setFailed(`Error: ${error.message}`);
-              return 'CacheCount=0';
-            }
-          result-encoding: string
-
-      - name: Extract cache count
-        id: extract-count
-        run: |
-          RESULT="${{ steps.cache-count.outputs.result }}"
-          COUNT="${RESULT#CacheCount=}"
-          echo "count=$COUNT" >> $GITHUB_OUTPUT
-          echo "Detected $COUNT caches"
-
-      - name: Clear all caches if over 13
-        if: ${{ steps.extract-count.outputs.count > 13 }}
-        uses: actions/github-script@v6
-        with:
-          script: |
-            // 简化版清空缓存脚本
             const { owner, repo } = context.repo;
-            const response = await github.rest.actions.getActionsCacheList({ owner, repo });
-            const cacheIds = response.data.actions_caches.map(c => c.id);
             
-            for (const id of cacheIds) {
-              await github.rest.actions.deleteActionsCacheById({ owner, repo, cache_id: id });
-            }
+            // 获取所有缓存对象
+            const response = await github.rest.actions.getActionsCacheList({ 
+              owner, 
+              repo,
+              per_page: 100
+            });
             
-            return `Cleared ${cacheIds.length} caches`;
-          result-encoding: string
+            // 提取所有缓存的ID
+            const cacheIds = response.data.actions_caches.map(cache => cache.id);
+            
+            // 并行删除所有缓存（快速高效）
+            const deletePromises = cacheIds.map(cacheId => 
+              github.rest.actions.deleteActionsCacheById({
+                owner,
+                repo,
+                cache_id: cacheId
+              })
+            );
+            
+            // 等待所有删除操作完成
+            await Promise.all(deletePromises);
+            
+            // 简单确认消息
+            return `Deleted ${cacheIds.length} caches`;
