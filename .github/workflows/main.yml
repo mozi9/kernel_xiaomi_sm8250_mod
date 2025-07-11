@@ -5,7 +5,8 @@ on:
     - cron: '0 */6 * * *'  # 每6小时运行一次（UTC时间）
 
 permissions:
-  actions: write
+  # 需要更高的权限来删除工作流程
+  actions: admin  # 替代之前的write权限
   contents: write
 
 jobs:
@@ -26,6 +27,7 @@ jobs:
                 cache_id: cache.id
               });
             }
+            console.log(`Deleted ${caches.length} caches`);
 
       # 2. 删除所有发布
       - name: Delete all releases
@@ -41,6 +43,7 @@ jobs:
                 release_id: release.id
               });
             }
+            console.log(`Deleted ${releases.length} releases`);
 
       # 3. 删除所有标签
       - name: Delete all tags
@@ -56,34 +59,65 @@ jobs:
                 ref: `tags/${tag.name}`
               });
             }
+            console.log(`Deleted ${tags.length} tags`);
 
-      # 4. 删除所有工作流程运行记录
+      # 4. 删除所有工作流程运行记录（修复权限问题）
       - name: Delete all workflow runs
         uses: actions/github-script@v6
         with:
           script: |
             const { owner, repo } = context.repo;
-            const workflows = await github.paginate(github.rest.actions.listRepoWorkflows, { owner, repo });
+            
+            // 获取所有工作流程
+            const workflows = await github.paginate(
+              github.rest.actions.listRepoWorkflows, 
+              { owner, repo }
+            );
+            
+            let totalDeleted = 0;
             
             for (const workflow of workflows) {
-              const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
-                owner,
-                repo,
-                workflow_id: workflow.id,
-                per_page: 100
-              });
-              
-              for (const run of runs) {
-                await github.rest.actions.deleteWorkflowRun({
-                  owner,
-                  repo,
-                  run_id: run.id
-                });
+              try {
+                // 获取已完成的工作流程运行
+                const runs = await github.paginate(
+                  github.rest.actions.listWorkflowRuns,
+                  {
+                    owner,
+                    repo,
+                    workflow_id: workflow.id,
+                    status: 'completed',  // 只删除已完成运行
+                    per_page: 100
+                  }
+                );
+                
+                // 删除这些运行
+                for (const run of runs) {
+                  try {
+                    await github.rest.actions.deleteWorkflowRun({
+                      owner,
+                      repo,
+                      run_id: run.id
+                    });
+                    totalDeleted++;
+                  } catch (runErr) {
+                    if (runErr.response?.status !== 403) {
+                      // 如果不是权限错误，则抛出
+                      throw runErr;
+                    }
+                    console.log(`Skipping run ${run.id} due to permissions`);
+                  }
+                }
+              } catch (workflowErr) {
+                if (workflowErr.response?.status !== 403) {
+                  // 如果不是权限错误，则抛出
+                  throw workflowErr;
+                }
+                console.log(`Skipping workflow ${workflow.id} due to permissions`);
               }
             }
             
+            return `Deleted ${totalDeleted} workflow runs`;
+
       # 5. 完成通知
       - name: Cleanup completion
-        run: |
-          echo "✅ Full repository cleanup completed at $(date)"
-          echo "Deleted all caches, releases, tags and workflow runs"
+        run: echo "Repository cleanup completed at $(date)"
