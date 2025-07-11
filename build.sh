@@ -140,9 +140,12 @@ elif [ "$KSU_VERSION" == "sukisu" ]; then
 elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
-    echo "[+] Running SukiSU-Ultra setup..."
-    curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main > /dev/null 2>&1
-    echo "-- SukiSU-Ultra version (GitHub): v3.1.7-作者小黑子@QQ2990172005"
+    curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
+    KSU_ZIP_STR=SukiSU-Ultra
+    echo "SukiSU-Ultra is enabled"
+    curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
+else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
 fi
