@@ -3,15 +3,10 @@
 # Some logics of this script are copied from [scripts/build_kernel]. Thanks to UtsavBalar1231.
 
 # Ensure the script exits on error
-set -e
 
-echo "正在自动修改 SukiSU-Ultra 版本号..."
-find . -type f \( -name "*.c" -o -name "*.h" -o -name "*.sh" -o -name "*.py" \) \
-    -exec grep -l "SukiSU-Ultra version" {} + | \
-    while read file; do
-        echo "修改 $file ..."
-        sed -i 's/SukiSU-Ultra version.*/-- SukiSU-Ultra version (GitHub): v3.1.7-作者小黑子@QQ2990172005/' "$file"
-    done
+export KSU_VERSION_OVERRIDE="-- SukiSU-Ultra version (GitHub): v3.1.7-作者小黑子@QQ2990172005"
+
+set -e
 
 TOOLCHAIN_PATH=$HOME/toolchain/proton-clang/bin
 GIT_COMMIT_ID=$(git rev-parse --short=13 HEAD)
