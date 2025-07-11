@@ -158,9 +158,6 @@ Build_AOSP(){
  
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
   
-    emake $MAKE_ARGS -j$(nproc) | \
-        sed -u 's/SukiSU-Ultra version (Github): [^ ]*/SukiSU-Ultra version (Github): v3.1.7-小黑子制作@QQ2990172005/g'
-
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
 
     make $MAKE_ARGS -j$(nproc)
@@ -244,9 +241,6 @@ Build_MIUI(){
 
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
 
-    make $MAKE_ARGS -j$(nproc) | \
-        sed -u 's/SukiSU-Ultra version (Github): [^ ]*/SukiSU-Ultra version (Github): v3.1.7-小黑子制作@QQ2990172005/g'
-   
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
 
     make $MAKE_ARGS -j$(nproc)
