@@ -1,35 +1,58 @@
 #!/bin/bash
 
-# ===== 在 build.sh 开头添加这些代码 =====
-# 锁定目标版本字符串
-TARGET_VERSION="v3.1.7-0b03cd9f@susfs-main"
-CUSTOM_VERSION="v3.1.7-作者小黑子@QQ2990172005"
+#!/bin/bash
 
-# 1. 替换内存中的字符串输出
-exec 3>&1
-exec > >(sed "s/$TARGET_VERSION/$CUSTOM_VERSION/g" >&3)
-
-# 2. 替换内核中的二进制字符串
-function patch_kernel_image() {
-    echo "正在修改内核二进制中的版本信息..."
+# ===== 在 build.sh 的 Image_Repack 函数开头添加 =====
+Image_Repack() {
+    # 1. 确保内核文件存在
     KERNEL_IMAGE="out/arch/arm64/boot/Image"
-    
-    # 确保文件存在
-    [ -f "$KERNEL_IMAGE" ] || return
-    
-    # 计算位置
-    OFFSET=$(grep -a -b -o "$TARGET_VERSION" "$KERNEL_IMAGE" | cut -d: -f1 | head -1)
-    
-    # 如果找到位置，进行替换
-    if [ -n "$OFFSET" ]; then
-        echo "在 $KERNEL_IMAGE 的偏移位置 $OFFSET 修改版本"
-        printf "$CUSTOM_VERSION" | dd of="$KERNEL_IMAGE" bs=1 seek="$OFFSET" conv=notrunc
+    if [ ! -f "$KERNEL_IMAGE" ]; then
+        echo "错误：内核文件未找到！"
+        exit 1
     fi
-}
 
-# 3. 在构建过程中自动修改
-trap patch_kernel_image EXIT
-# ===== 修改结束 =====
+    # 2. 定义目标版本信息
+    OLD_VERSION="v3.1.7-0b03cd9f@susfs-main"
+    NEW_VERSION="v3.1.7-作者小黑子@QQ2990172005"
+    
+    # 3. 创建临时副本进行修改
+    cp "$KERNEL_IMAGE" "${KERNEL_IMAGE}.orig"
+    
+    # 4. 计算偏移量
+    echo "定位版本字符串位置..."
+    OFFSET=$(strings -t x "${KERNEL_IMAGE}.orig" | \
+             grep -F "$OLD_VERSION" | \
+             head -1 | \
+             cut -d' ' -f1)
+    
+    if [ -z "$OFFSET" ]; then
+        echo "错误：未找到目标版本字符串 '$OLD_VERSION'"
+        exit 1
+    fi
+    
+    # 5. 直接二进制修改（工业级方法）
+    echo "在偏移 0x$OFFSET 处修改内核二进制..."
+    printf "%s" "$NEW_VERSION" | \
+        dd of="$KERNEL_IMAGE" \
+           bs=1 \
+           seek=$((0x$OFFSET)) \
+           conv=notrunc \
+           2>/dev/null
+    
+    # 6. 验证修改
+    echo "验证修改结果..."
+    strings "$KERNEL_IMAGE" | grep -F "$NEW_VERSION"
+    if [ $? -ne 0 ]; then
+        echo "错误：修改未生效，恢复原始文件"
+        mv "${KERNEL_IMAGE}.orig" "$KERNEL_IMAGE"
+        exit 1
+    fi
+    
+    # 7. 清理临时文件
+    rm "${KERNEL_IMAGE}.orig"
+    
+    # 以下是原始 Image_Repack 函数的其余内容...
+    # [原始代码保持不变]
 
 
 # Some logics of this script are copied from [scripts/build_kernel]. Thanks to UtsavBalar1231.
