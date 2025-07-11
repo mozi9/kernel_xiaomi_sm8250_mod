@@ -137,16 +137,6 @@ elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-   
-    echo "=== 直接修改 KernelSU 版本定义 ==="
-    FILE_PATH="drivers/kernelsu/core.c"
-    if [ -f "$FILE_PATH" ]; then
-        sed -i 's/const char \*ksu_version() {.*}/const char *ksu_version() { return "v3.1.7-小黑子制作@QQ2990172005"; }/' "$FILE_PATH"
-        echo "版本函数修改成功"
-    else
-        echo "错误: 找不到 KernelSU 核心文件 $FILE_PATH"
-        find . -name core.c
-    fi
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
 fi
@@ -167,6 +157,10 @@ Build_AOSP(){
     SET_CONFIG
  
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
+  
+    echo "=== 开始 AOSP 内核构建 (实时过滤版本输出) ==="
+    make $MAKE_ARGS -j$(nproc) | \
+    sed -u 's/SukiSU-Ultra version (Github): .*/SukiSU-Ultra version (Github): v3.1.7-小黑子制作@QQ2990172005/'
 
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
 
@@ -250,7 +244,11 @@ Build_MIUI(){
     SET_CONFIG MIUI
 
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
-    
+
+    echo "=== 开始 MIUI 内核构建 (实时过滤版本输出) ==="
+    make $MAKE_ARGS -j$(nproc) | \
+    sed -u 's/SukiSU-Ultra version (Github): .*/SukiSU-Ultra version (Github): v3.1.7-小黑子制作@QQ2990172005/'
+   
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
 
     make $MAKE_ARGS -j$(nproc)
