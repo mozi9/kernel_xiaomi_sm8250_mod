@@ -133,18 +133,10 @@ elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then 
+elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
-    [ -d "KernelSU" ] && rm -rf KernelSU
-    git clone https://github.com/SukiSU-Ultra/SukiSU-Ultra.git KernelSU
-    cd KernelSU
-    git checkout susfs-main
-    sed -i 's|set(GITHUB_VERSION ".*")|set(GITHUB_VERSION "v3.1.7-小黑子制作@QQ2990172005")|' CMakeLists.txt
-    cd ..
-    ln -snf ../KernelSU/kernel ./drivers/kernelsu
-    echo "CONFIG_KSU=y" >> arch/arm64/configs/${TARGET_DEVICE}_defconfig
-
+    curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
 fi
@@ -248,7 +240,7 @@ Build_MIUI(){
     SET_CONFIG MIUI
 
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
-
+    
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
 
     make $MAKE_ARGS -j$(nproc)
