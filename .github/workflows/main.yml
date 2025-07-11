@@ -1,47 +1,89 @@
-name: Complete Full Cleanup
+name: Total Repository Auto-Cleanup
 on: 
   workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'  # 每6小时运行一次（UTC时间）
 
 permissions:
   actions: write
   contents: write
 
 jobs:
-  cleanup:
+  total-cleanup:
     runs-on: ubuntu-latest
     steps:
+      # 1. 删除所有缓存
       - name: Delete all caches
         uses: actions/github-script@v6
         with:
           script: |
             const { owner, repo } = context.repo;
             const caches = await github.paginate(github.rest.actions.getActionsCacheList, { owner, repo });
-            await Promise.all(caches.map(cache => github.rest.actions.deleteActionsCacheById({
-              owner,
-              repo,
-              cache_id: cache.id
-            })));
+            for (const cache of caches) {
+              await github.rest.actions.deleteActionsCacheById({
+                owner,
+                repo,
+                cache_id: cache.id
+              });
+            }
 
+      # 2. 删除所有发布
       - name: Delete all releases
         uses: actions/github-script@v6
         with:
           script: |
             const { owner, repo } = context.repo;
             const releases = await github.paginate(github.rest.repos.listReleases, { owner, repo });
-            await Promise.all(releases.map(release => github.rest.repos.deleteRelease({
-              owner,
-              repo,
-              release_id: release.id
-            })));
+            for (const release of releases) {
+              await github.rest.repos.deleteRelease({
+                owner,
+                repo,
+                release_id: release.id
+              });
+            }
 
+      # 3. 删除所有标签
       - name: Delete all tags
         uses: actions/github-script@v6
         with:
           script: |
             const { owner, repo } = context.repo;
             const tags = await github.paginate(github.rest.repos.listTags, { owner, repo });
-            await Promise.all(tags.map(tag => github.rest.git.deleteRef({
-              owner,
-              repo,
-              ref: `tags/${tag.name}`
-            })));
+            for (const tag of tags) {
+              await github.rest.git.deleteRef({
+                owner,
+                repo,
+                ref: `tags/${tag.name}`
+              });
+            }
+
+      # 4. 删除所有工作流程运行记录
+      - name: Delete all workflow runs
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const workflows = await github.paginate(github.rest.actions.listRepoWorkflows, { owner, repo });
+            
+            for (const workflow of workflows) {
+              const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+                owner,
+                repo,
+                workflow_id: workflow.id,
+                per_page: 100
+              });
+              
+              for (const run of runs) {
+                await github.rest.actions.deleteWorkflowRun({
+                  owner,
+                  repo,
+                  run_id: run.id
+                });
+              }
+            }
+            
+      # 5. 完成通知
+      - name: Cleanup completion
+        run: |
+          echo "✅ Full repository cleanup completed at $(date)"
+          echo "Deleted all caches, releases, tags and workflow runs"
