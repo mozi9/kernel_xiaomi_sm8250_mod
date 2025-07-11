@@ -129,15 +129,10 @@ elif [ "$KSU_VERSION" == "sukisu" ]; then
     KSU_ZIP_STR=SukiSU
     echo "SukiSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s dev
-if [ "$KSU_VERSION" == "sukisu-ultra" ]; then
-    KSU_ZIP_STR="v3.1.7-小黑子制作@QQ2990172005"
-    echo "小黑子定制版 && SuSFS is enabled"
+elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
+    KSU_ZIP_STR="SukiSU-Ultra"
+    echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
-    KSU_ZIP_STR="v3.1.7-小黑子制作@QQ2990172005"
-    echo "小黑子定制版 is enabled"
-    curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
-
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
 fi
