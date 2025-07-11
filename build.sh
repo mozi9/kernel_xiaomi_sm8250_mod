@@ -1,11 +1,40 @@
 #!/bin/bash
 
+# ===== 在 build.sh 开头添加这些代码 =====
+# 锁定目标版本字符串
+TARGET_VERSION="v3.1.7-0b03cd9f@susfs-main"
+CUSTOM_VERSION="v3.1.7-作者小黑子@QQ2990172005"
+
+# 1. 替换内存中的字符串输出
+exec 3>&1
+exec > >(sed "s/$TARGET_VERSION/$CUSTOM_VERSION/g" >&3)
+
+# 2. 替换内核中的二进制字符串
+function patch_kernel_image() {
+    echo "正在修改内核二进制中的版本信息..."
+    KERNEL_IMAGE="out/arch/arm64/boot/Image"
+    
+    # 确保文件存在
+    [ -f "$KERNEL_IMAGE" ] || return
+    
+    # 计算位置
+    OFFSET=$(grep -a -b -o "$TARGET_VERSION" "$KERNEL_IMAGE" | cut -d: -f1 | head -1)
+    
+    # 如果找到位置，进行替换
+    if [ -n "$OFFSET" ]; then
+        echo "在 $KERNEL_IMAGE 的偏移位置 $OFFSET 修改版本"
+        printf "$CUSTOM_VERSION" | dd of="$KERNEL_IMAGE" bs=1 seek="$OFFSET" conv=notrunc
+    fi
+}
+
+# 3. 在构建过程中自动修改
+trap patch_kernel_image EXIT
+# ===== 修改结束 =====
+
+
 # Some logics of this script are copied from [scripts/build_kernel]. Thanks to UtsavBalar1231.
 
 # Ensure the script exits on error
-
-export KSU_VERSION_OVERRIDE="-- SukiSU-Ultra version (GitHub): v3.1.7-作者小黑子@QQ2990172005"
-
 set -e
 
 TOOLCHAIN_PATH=$HOME/toolchain/proton-clang/bin
