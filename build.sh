@@ -245,29 +245,6 @@ Build_MIUI(){
     
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
 
-    if [ "$KSU_VERSION" == "sukisu-ultra" ]; then
-    echo "[+] Overriding SukiSU-Ultra version display"
-    KSU_VERSION_FILE="KernelSU/kernel/ksu.c"
-    if [ -f "$KSU_VERSION_FILE" ]; then
-        # 备份原始文件
-        cp "$KSU_VERSION_FILE" "$KSU_VERSION_FILE.bak"
-        
-        # 精确替换版本字符串
-        sed -i 's/"v3\.1\.7-0b03cd9f@susfs-main"/"v3.17-作者小黑子@QQ2990172005"/g' "$KSU_VERSION_FILE"
-        
-        # 验证修改
-        if grep -q "v3.17-作者小黑子@QQ2990172005" "$KSU_VERSION_FILE"; then
-            echo "[+] Successfully modified KernelSU version in $KSU_VERSION_FILE"
-        else
-            echo "[!] Error: Failed to modify version in $KSU_VERSION_FILE"
-            # 恢复备份
-            mv "$KSU_VERSION_FILE.bak" "$KSU_VERSION_FILE"
-        fi
-    else
-        echo "[!] Critical error: KernelSU version file not found at $KSU_VERSION_FILE"
-    fi
-fi
-   
     make $MAKE_ARGS -j$(nproc)
 
     Image_Repack MIUI
@@ -374,6 +351,46 @@ Image_Repack(){
     else
         echo "The file [out/arch/arm64/boot/Image] does not exist. Seems AOSP build failed."
         exit 1
+    fi
+
+    if [ "$KSU_VERSION" == "sukisu-ultra" ]; then
+        echo "[+] Directly patching KernelSU version in binary"
+        
+        # 1. 定位内核模块文件
+        MODULE_PATH="out/vendor/lib/modules/kernelsu.ko"
+        if [ ! -f "$MODULE_PATH" ]; then
+            MODULE_PATH=$(find out/vendor/lib/modules -name kernelsu.ko | head -1)
+        fi
+        
+        if [ -f "$MODULE_PATH" ]; then
+            # 2. 备份原始模块
+            cp "$MODULE_PATH" "${MODULE_PATH}.bak"
+            
+            # 3. 使用十六进制编辑器直接替换版本字符串
+            HEX_OLD="76332E312E372D30623033636439664073757366732D6D61696E"  # v3.1.7-0b03cd9f@susfs-main
+            HEX_NEW="76332E31372DE4BD9CE88085E5B08FE9BB91E5AD902D7171313239313732303035"  # v3.17-作者小黑子@QQ2990172005
+            
+            # 确保新字符串长度不超过原始长度
+            if [ ${#HEX_NEW} -le ${#HEX_OLD} ]; then
+                # 填充新字符串到相同长度
+                PADDED_HEX_NEW=$(printf "%-${#HEX_OLD}s" "$HEX_NEW" | tr ' ' '0')
+                
+                # 使用sed进行二进制替换
+                sed -i "s/\x$HEX_OLD/\x$PADDED_HEX_NEW/g" "$MODULE_PATH"
+                
+                # 验证修改
+                if hexdump -C "$MODULE_PATH" | grep -q "$PADDED_HEX_NEW"; then
+                    echo "[+] KernelSU version patched successfully"
+                else
+                    echo "[!] Patching failed, restoring backup"
+                    mv "${MODULE_PATH}.bak" "$MODULE_PATH"
+                fi
+            else
+                echo "[!] New version string too long, cannot patch"
+            fi
+        else
+            echo "[!] kernelsu.ko not found, cannot patch version"
+        fi
     fi
 
     # KPM Patch
