@@ -1,5 +1,7 @@
 #!/bin/bash
+
 # Some logics of this script are copied from [scripts/build_kernel]. Thanks to UtsavBalar1231.
+
 # Ensure the script exits on error
 set -e
 
@@ -17,6 +19,8 @@ if [ -z "$1" ]; then
     echo "    bash build.sh umi ksu"
     exit 1
 fi
+
+
 
 if [ ! -d $TOOLCHAIN_PATH ]; then
     echo "TOOLCHAIN_PATH [$TOOLCHAIN_PATH] does not exist."
@@ -126,9 +130,6 @@ elif [ "$KSU_VERSION" == "sukisu" ]; then
     echo "SukiSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s dev
 elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
-    echo "SukiSU-Ultra && SuSFS is enabled"
-    curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
@@ -157,8 +158,9 @@ Build_AOSP(){
     SET_CONFIG
  
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
-  
+    
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
+
 
     make $MAKE_ARGS -j$(nproc)
     
@@ -240,8 +242,9 @@ Build_MIUI(){
     SET_CONFIG MIUI
 
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
-
+    
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
+
 
     make $MAKE_ARGS -j$(nproc)
 
@@ -370,19 +373,6 @@ Image_Repack(){
     mkdir -p anykernel/kernels/
 
     cp out/arch/arm64/boot/Image anykernel/kernels/
-    OLD_STR="v3.1.7-0b03cd9f@susfs-main"
-    NEW_STR="v3.1.7-作者小黑子@QQ2990172005"
-    if [ -f "anykernel/kernels/Image" ]; then
-        echo "正在修改内核镜像中的版本信息: [$OLD_STR] => [$NEW_STR]"
-        OLD_HEX=$(echo -n "$OLD_STR" | xxd -p | tr -d '\n')
-        NEW_HEX=$(echo -n "$NEW_STR" | xxd -p | tr -d '\n')
-        xxd -p anykernel/kernels/Image | tr -d '\n' | sed "s/$OLD_HEX/$NEW_HEX/g" | xxd -r -p > anykernel/kernels/Image.tmp
-        mv anykernel/kernels/Image.tmp anykernel/kernels/Image
-    else
-        echo "错误：未找到内核镜像文件，无法修改版本信息"
-        exit 1
-    fi
-    
     cp out/arch/arm64/boot/dtb anykernel/kernels/
 
     cd anykernel 
@@ -427,8 +417,3 @@ else
 fi
     
 echo "Done. The flashable zip is: [./$ZIP_FILENAME]"
-
-OLD_STR="v3.1.7-0b03cd9f@susfs-main"
-NEW_STR="v3.1.7-作者小黑子@QQ2990172005"
-echo "正在修改刷机包中的版本信息..."
-find anykernel/ -type f ! -name "Image" -exec sed -i "s/$OLD_STR/$NEW_STR/g" {} +
