@@ -132,20 +132,18 @@ elif [ "$KSU_VERSION" == "sukisu" ]; then
 elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
-    # 修改版本信息为自定义内容
-    echo "-- SukiSU-Ultra version (GitHub): 13228"
+    # 添加自定义版本信息输出
+    echo "-- SukiSU-Ultra version (GitHub): $(curl -s https://api.github.com/repos/SukiSU-Ultra/SukiSU-Ultra/commits?per_page=1 | jq -r '.[0].sha' | cut -c1-5)"
     echo "-- SukiSU-Ultra version (Github): v3.1.7-作者小黑子@QQ2990172005"
     echo "-- SukiSU: Manual hooking enabled!"
-    # 其他输出保持不变...
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
 elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
-    # 修改版本信息为自定义内容
-    echo "-- SukiSU-Ultra version (GitHub): 13228"
+    # 添加自定义版本信息输出
+    echo "-- SukiSU-Ultra version (GitHub): $(curl -s https://api.github.com/repos/SukiSU-Ultra/SukiSU-Ultra/commits?per_page=1 | jq -r '.[0].sha' | cut -c1-5)"
     echo "-- SukiSU-Ultra version (Github): v3.1.7-作者小黑子@QQ2990172005"
     echo "-- SukiSU: Manual hooking enabled!"
-    # 其他输出保持不变...
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
 else
     KSU_ZIP_STR=NoKernelSU
