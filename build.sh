@@ -159,10 +159,7 @@ Build_AOSP(){
  
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
 
-    sed -i 's/v3.1.7-0b03cd9f@susfs-main/v3.1.7-作者小黑子@QQ2990172005/g' KernelSU/version.h
-    
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
-
 
     make $MAKE_ARGS -j$(nproc)
     
@@ -245,10 +242,7 @@ Build_MIUI(){
 
     (echo > .scmversion && scripts/config --file out/.config -d LOCALVERSION_AUTO --set-str CONFIG_LOCALVERSION "-${GIT_COMMIT_ID}" >/dev/null)
 
-    sed -i 's/v3.1.7-0b03cd9f@susfs-main/v3.1.7-作者小黑子@QQ2990172005/g' KernelSU/version.h
-    
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
-
 
     make $MAKE_ARGS -j$(nproc)
 
