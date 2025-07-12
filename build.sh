@@ -137,29 +137,6 @@ elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
-    # 在安装 KernelSU 之后添加补丁逻辑
-if [[ "$KSU_VERSION" == "sukisu-ultra" ]]; then
-    echo "=== 开始修改 SukiSU-Ultra 版本信息 ==="
-    
-    # 定位 Makefile 路径
-    KSU_MAKEFILE="drivers/kernelsu/Makefile"
-    
-    if [ -f "$KSU_MAKEFILE" ]; then
-        echo "找到 SukiSU-Ultra Makefile: $KSU_MAKEFILE"
-        
-        # 创建备份
-        cp "$KSU_MAKEFILE" "${KSU_MAKEFILE}.bak"
-        
-        # 应用补丁 - 替换版本生成函数
-        sed -i '/define get_ksu_version_full/{n;n;c\v$1-作者小黑子@QQ2990172005\nendef' "$KSU_MAKEFILE"
-        
-        # 验证修改
-        echo "=== 修改后的版本生成函数 ==="
-        grep -A 2 "define get_ksu_version_full" "$KSU_MAKEFILE"
-    else
-        echo "错误: 未找到 SukiSU-Ultra Makefile!"
-        exit 1
-    fi
 else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
