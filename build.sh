@@ -4,7 +4,7 @@
 
 # Ensure the script exits on error
 set -e
-
+CUSTOM_KSU_VERSION="v3.1.7-作者小黑子@QQ2990172005"
 TOOLCHAIN_PATH=$HOME/toolchain/proton-clang/bin
 GIT_COMMIT_ID=$(git rev-parse --short=13 HEAD)
 TARGET_DEVICE=$1
