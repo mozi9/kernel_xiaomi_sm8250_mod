@@ -129,22 +129,19 @@ elif [ "$KSU_VERSION" == "sukisu" ]; then
     KSU_ZIP_STR=SukiSU
     echo "SukiSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s dev
+# 修改 SukiSU-Ultra 的内核模块版本信息
 elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
-    # 添加自定义版本信息输出
-    echo "-- SukiSU-Ultra version (GitHub): $(curl -s https://api.github.com/repos/SukiSU-Ultra/SukiSU-Ultra/commits?per_page=1 | jq -r '.[0].sha' | cut -c1-5)"
-    echo "-- SukiSU-Ultra version (Github): v3.1.7-作者小黑子@QQ2990172005"
-    echo "-- SukiSU: Manual hooking enabled!"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+    # 修改内核模块版本信息
+    sed -i 's/v3.1.7-0b03cd9f@susfs-main/v3.1.7-作者小黑子@QQ2990172005/g' drivers/kernelsu/version.h
 elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
-    # 添加自定义版本信息输出
-    echo "-- SukiSU-Ultra version (GitHub): $(curl -s https://api.github.com/repos/SukiSU-Ultra/SukiSU-Ultra/commits?per_page=1 | jq -r '.[0].sha' | cut -c1-5)"
-    echo "-- SukiSU-Ultra version (Github): v3.1.7-作者小黑子@QQ2990172005"
-    echo "-- SukiSU: Manual hooking enabled!"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
+    # 修改内核模块版本信息
+    sed -i 's/v3.1.7-0b03cd9f@susfs-main/v3.1.7-作者小黑子@QQ2990172005/g' drivers/kernelsu/version.h
 else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
