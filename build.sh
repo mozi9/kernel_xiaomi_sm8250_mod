@@ -246,15 +246,27 @@ Build_MIUI(){
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
 
     if [ "$KSU_VERSION" == "sukisu-ultra" ]; then
-        echo "[+] Overriding SukiSU-Ultra version display"
-        KSU_VERSION_FILE="KernelSU/kernel/version.h"
-        if [ -f "$KSU_VERSION_FILE" ]; then
-            sed -i 's/#define KSU_VERSION .*/#define KSU_VERSION "v3.17-作者小黑子@QQ2990172005"/' "$KSU_VERSION_FILE"
-            echo "[+] Modified KernelSU version in $KSU_VERSION_FILE"
+    echo "[+] Overriding SukiSU-Ultra version display"
+    KSU_VERSION_FILE="KernelSU/kernel/ksu.c"
+    if [ -f "$KSU_VERSION_FILE" ]; then
+        # 备份原始文件
+        cp "$KSU_VERSION_FILE" "$KSU_VERSION_FILE.bak"
+        
+        # 精确替换版本字符串
+        sed -i 's/"v3\.1\.7-0b03cd9f@susfs-main"/"v3.17-作者小黑子@QQ2990172005"/g' "$KSU_VERSION_FILE"
+        
+        # 验证修改
+        if grep -q "v3.17-作者小黑子@QQ2990172005" "$KSU_VERSION_FILE"; then
+            echo "[+] Successfully modified KernelSU version in $KSU_VERSION_FILE"
         else
-            echo "[!] Warning: KernelSU version file not found at $KSU_VERSION_FILE"
+            echo "[!] Error: Failed to modify version in $KSU_VERSION_FILE"
+            # 恢复备份
+            mv "$KSU_VERSION_FILE.bak" "$KSU_VERSION_FILE"
         fi
+    else
+        echo "[!] Critical error: KernelSU version file not found at $KSU_VERSION_FILE"
     fi
+fi
    
     make $MAKE_ARGS -j$(nproc)
 
