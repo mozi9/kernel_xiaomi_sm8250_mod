@@ -125,23 +125,43 @@ elif [[ "$KSU_VERSION" == "sukisu" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR=SukiSU_SuSFS
     echo "SukiSU && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s susfs-dev
-elif [ "$KSU_VERSION" == "sukisu" ]; then
-    KSU_ZIP_STR=SukiSU
-    echo "SukiSU is enabled"
-    curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s dev
-# 修改 SukiSU-Ultra 的内核模块版本信息
 elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-    # 修改内核模块版本信息
-    sed -i 's/v3.1.7-0b03cd9f@susfs-main/v3.1.7-作者小黑子@QQ2990172005/g' drivers/kernelsu/version.h
+    
+    # 查找并修改版本文件
+    echo "=== 查找 KernelSU 版本文件 ==="
+    find . -name "version.h" -print
+    
+    # 尝试修改版本文件
+    if [ -f "drivers/kernelsu/version.h" ]; then
+        echo "找到 drivers/kernelsu/version.h，修改版本信息"
+        sed -i "s/#define KERNELSU_VERSION \".*\"/#define KERNELSU_VERSION \"$CUSTOM_KSU_VERSION\"/" drivers/kernelsu/version.h
+        cat drivers/kernelsu/version.h
+    else
+        echo "未找到 drivers/kernelsu/version.h，尝试其他位置"
+        find drivers/kernelsu -name "*.h" -exec grep -Hn "KERNELSU_VERSION" {} \;
+    fi
+    
 elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
-    # 修改内核模块版本信息
-    sed -i 's/v3.1.7-0b03cd9f@susfs-main/v3.1.7-作者小黑子@QQ2990172005/g' drivers/kernelsu/version.h
+    
+    # 查找并修改版本文件
+    echo "=== 查找 KernelSU 版本文件 ==="
+    find . -name "version.h" -print
+    
+    # 尝试修改版本文件
+    if [ -f "drivers/kernelsu/version.h" ]; then
+        echo "找到 drivers/kernelsu/version.h，修改版本信息"
+        sed -i "s/#define KERNELSU_VERSION \".*\"/#define KERNELSU_VERSION \"$CUSTOM_KSU_VERSION\"/" drivers/kernelsu/version.h
+        cat drivers/kernelsu/version.h
+    else
+        echo "未找到 drivers/kernelsu/version.h，尝试其他位置"
+        find drivers/kernelsu -name "*.h" -exec grep -Hn "KERNELSU_VERSION" {} \;
+    fi
 else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
