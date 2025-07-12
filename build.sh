@@ -245,7 +245,17 @@ Build_MIUI(){
     
     export KBUILD_BUILD_TIMESTAMP="$(date '+%a %b %d %H:%M:%S CST 2023')"
 
-
+    if [ "$KSU_VERSION" == "sukisu-ultra" ]; then
+        echo "[+] Overriding SukiSU-Ultra version display"
+        KSU_VERSION_FILE="KernelSU/kernel/version.h"
+        if [ -f "$KSU_VERSION_FILE" ]; then
+            sed -i 's/#define KSU_VERSION .*/#define KSU_VERSION "v3.17-作者小黑子@QQ2990172005"/' "$KSU_VERSION_FILE"
+            echo "[+] Modified KernelSU version in $KSU_VERSION_FILE"
+        else
+            echo "[!] Warning: KernelSU version file not found at $KSU_VERSION_FILE"
+        fi
+    fi
+   
     make $MAKE_ARGS -j$(nproc)
 
     Image_Repack MIUI
