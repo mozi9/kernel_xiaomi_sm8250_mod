@@ -110,6 +110,25 @@ if [ "$KSU_VERSION" == "ksu" ]; then
     KSU_ZIP_STR=KernelSU
     echo "KSU is enabled"
     curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
+
+    echo "应用版本定制..."
+
+# 创建版本信息文件
+echo '#define CUSTOM_VERSION "v3.17"
+#define AUTHOR_INFO "作者小黑子@QQ2990172005"' > drivers/kernelsu/version_info.h
+
+# 修改核心文件
+sed -i 's/#define KSU_VERSION.*/#define KSU_VERSION CUSTOM_VERSION "-" AUTHOR_INFO/' drivers/kernelsu/ksu.c
+sed -i '/pr_info("KernelSU version:/a \    pr_info("定制版本: %s-%s\\\\n", CUSTOM_VERSION, AUTHOR_INFO);' drivers/kernelsu/ksu.c
+
+# 修改系统接口
+sed -i 's/sysfs_emit(buf, "%s\\\\n", KSU_VERSION);/sysfs_emit(buf, "%s-%s\\\\n", CUSTOM_VERSION, AUTHOR_INFO);/' drivers/kernelsu/sysfs.c
+
+# 修改内核启动信息
+sed -i '/pr_info("Android kernel version:/a \    pr_info("KernelSU定制版本: %s-%s\\\\n", CUSTOM_VERSION, AUTHOR_INFO);' init/version.c
+
+echo "KernelSU 版本已定制为: v3.17-作者小黑子@QQ2990172005"
+    
 elif [[ "$KSU_VERSION" == "ksu" && "$SuSFS_ENABLE" -eq 1 ]]; then
     echo "Official KernelSU not supported SuSFS"
     exit 1
