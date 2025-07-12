@@ -133,10 +133,12 @@ elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+    sed -i 's/#define KSU_VERSION ".*"/#define KSU_VERSION "v3.17-作者小黑子@QQ2990172005"/' drivers/kernelsu/include/linux/version.h
 elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
+    sed -i 's/#define KSU_VERSION ".*"/#define KSU_VERSION "v3.17-作者小黑子@QQ2990172005"/' drivers/kernelsu/include/linux/version.h
 else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
