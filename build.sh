@@ -2,32 +2,6 @@
 # Some logics of this script are copied from [scripts/build_kernel]. Thanks to UtsavBalar1231.
 # Ensure the script exits on error
 set -e
-# ===== 添加版本替换函数 =====
-replace_sukisu_version() {
-    # 定义目标版本和自定义版本
-    local OLD_VERSION="v3.1.7-0b03cd9f@susfs-main"
-    local NEW_VERSION="v3.1.7-作者小黑子@QQ2990172005"
-    
-    echo "正在强制替换 SukiSU-Ultra 版本信息..."
-    
-    # 确保 KernelSU 目录存在
-    if [ ! -d "KernelSU" ]; then
-        echo "错误：KernelSU 目录不存在，无法替换版本信息"
-        return 1
-    fi
-    
-    # 强制替换所有文本文件中的版本信息
-    find KernelSU -type f -exec grep -Iq . {} \; -exec sed -i \
-        -e "s|${OLD_VERSION}|${NEW_VERSION}|g" \
-        -e "s|SukiSU-Ultra version.*|SukiSU-Ultra version (GitHub): ${NEW_VERSION}|g" \
-        -e "s|sukisu-ultra:.*|sukisu-ultra: ${NEW_VERSION}|g" \
-        {} +
-    
-    # 添加版本标记文件
-    echo "${NEW_VERSION}" > KernelSU/.custom_version
-    echo "版本替换完成！"
-}
-# ===== 函数结束 =====
 
 TOOLCHAIN_PATH=$HOME/toolchain/proton-clang/bin
 GIT_COMMIT_ID=$(git rev-parse --short=13 HEAD)
@@ -43,8 +17,6 @@ if [ -z "$1" ]; then
     echo "    bash build.sh umi ksu"
     exit 1
 fi
-
-
 
 if [ ! -d $TOOLCHAIN_PATH ]; then
     echo "TOOLCHAIN_PATH [$TOOLCHAIN_PATH] does not exist."
@@ -156,19 +128,14 @@ elif [ "$KSU_VERSION" == "sukisu" ]; then
 elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-    
-    # ===== 调用替换函数 =====
-    replace_sukisu_version
-    # =======================
-    
+elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
+    KSU_ZIP_STR="SukiSU-Ultra"
+    echo "SukiSU-Ultra && SuSFS is enabled"
+    curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
 elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
+    KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
-    
-    # ===== 调用替换函数 =====
-    replace_sukisu_version
-    # =======================
-    
 else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
