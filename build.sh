@@ -4,7 +4,7 @@
 
 # Ensure the script exits on error
 set -e
-CUSTOM_KSU_VERSION="v3.1.7-作者小黑子@QQ2990172005"
+
 TOOLCHAIN_PATH=$HOME/toolchain/proton-clang/bin
 GIT_COMMIT_ID=$(git rev-parse --short=13 HEAD)
 TARGET_DEVICE=$1
@@ -125,42 +125,40 @@ elif [[ "$KSU_VERSION" == "sukisu" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR=SukiSU_SuSFS
     echo "SukiSU && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s susfs-dev
+elif [ "$KSU_VERSION" == "sukisu" ]; then
+    KSU_ZIP_STR=SukiSU
+    echo "SukiSU is enabled"
+    curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s dev
 elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-    
-    # 查找并修改版本文件
-    echo "=== 查找 KernelSU 版本文件 ==="
-    find . -name "version.h" -print
-    
-    # 尝试修改版本文件
-    if [ -f "drivers/kernelsu/version.h" ]; then
-        echo "找到 drivers/kernelsu/version.h，修改版本信息"
-        sed -i "s/#define KERNELSU_VERSION \".*\"/#define KERNELSU_VERSION \"$CUSTOM_KSU_VERSION\"/" drivers/kernelsu/version.h
-        cat drivers/kernelsu/version.h
-    else
-        echo "未找到 drivers/kernelsu/version.h，尝试其他位置"
-        find drivers/kernelsu -name "*.h" -exec grep -Hn "KERNELSU_VERSION" {} \;
-    fi
-    
 elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
+    # 在安装 KernelSU 之后添加补丁逻辑
+if [[ "$KSU_VERSION" == "sukisu-ultra" ]]; then
+    echo "=== 开始修改 SukiSU-Ultra 版本信息 ==="
     
-    # 查找并修改版本文件
-    echo "=== 查找 KernelSU 版本文件 ==="
-    find . -name "version.h" -print
+    # 定位 Makefile 路径
+    KSU_MAKEFILE="drivers/kernelsu/Makefile"
     
-    # 尝试修改版本文件
-    if [ -f "drivers/kernelsu/version.h" ]; then
-        echo "找到 drivers/kernelsu/version.h，修改版本信息"
-        sed -i "s/#define KERNELSU_VERSION \".*\"/#define KERNELSU_VERSION \"$CUSTOM_KSU_VERSION\"/" drivers/kernelsu/version.h
-        cat drivers/kernelsu/version.h
+    if [ -f "$KSU_MAKEFILE" ]; then
+        echo "找到 SukiSU-Ultra Makefile: $KSU_MAKEFILE"
+        
+        # 创建备份
+        cp "$KSU_MAKEFILE" "${KSU_MAKEFILE}.bak"
+        
+        # 应用补丁 - 替换版本生成函数
+        sed -i '/define get_ksu_version_full/{n;n;c\v$1-作者小黑子@QQ2990172005\nendef' "$KSU_MAKEFILE"
+        
+        # 验证修改
+        echo "=== 修改后的版本生成函数 ==="
+        grep -A 2 "define get_ksu_version_full" "$KSU_MAKEFILE"
     else
-        echo "未找到 drivers/kernelsu/version.h，尝试其他位置"
-        find drivers/kernelsu -name "*.h" -exec grep -Hn "KERNELSU_VERSION" {} \;
+        echo "错误: 未找到 SukiSU-Ultra Makefile!"
+        exit 1
     fi
 else
     KSU_ZIP_STR=NoKernelSU
