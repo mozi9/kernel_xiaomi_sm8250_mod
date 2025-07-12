@@ -133,6 +133,23 @@ elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+
+    echo "安装SukiSU-Ultra后立即修改版本信息..."
+    
+    # 确保KernelSU目录存在
+    if [ -d "KernelSU" ]; then
+        # 创建自定义版本文件
+        cat > KernelSU/version.h <<EOF
+#define KSU_VERSION "v3.1.7-作者小黑子@QQ2990172005"
+#define KSU_VERSION_CODE 13228
+#define SUSFS_VERSION "v1.5.9"
+EOF
+        
+        echo "版本信息已成功修改！"
+    else
+        echo "警告：KernelSU目录不存在，跳过版本修改"
+    fi
+    
 elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
