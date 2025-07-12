@@ -354,42 +354,52 @@ Image_Repack(){
     fi
 
     if [ "$KSU_VERSION" == "sukisu-ultra" ]; then
-        echo "[+] Directly patching KernelSU version in binary"
+        echo "[+] Modifying KernelSU module version"
         
         # 1. 定位内核模块文件
-        MODULE_PATH="out/vendor/lib/modules/kernelsu.ko"
-        if [ ! -f "$MODULE_PATH" ]; then
-            MODULE_PATH=$(find out/vendor/lib/modules -name kernelsu.ko | head -1)
+        MODULE_PATH=""
+        for path in "out/vendor/lib/modules/kernelsu.ko" \
+                    "out/vendor/lib/modules/vendor/lib/modules/kernelsu.ko" \
+                    "out/vendor/lib/modules/1.1/kernelsu.ko"; do
+            if [ -f "$path" ]; then
+                MODULE_PATH="$path"
+                break
+            fi
+        done
+        
+        if [ -z "$MODULE_PATH" ]; then
+            MODULE_PATH=$(find out/vendor/lib/modules -name kernelsu.ko 2>/dev/null | head -1)
         fi
         
         if [ -f "$MODULE_PATH" ]; then
+            echo "[+] Found kernelsu.ko at $MODULE_PATH"
+            
             # 2. 备份原始模块
             cp "$MODULE_PATH" "${MODULE_PATH}.bak"
             
-            # 3. 使用十六进制编辑器直接替换版本字符串
-            HEX_OLD="76332E312E372D30623033636439664073757366732D6D61696E"  # v3.1.7-0b03cd9f@susfs-main
-            HEX_NEW="76332E31372DE4BD9CE88085E5B08FE9BB91E5AD902D7171313239313732303035"  # v3.17-作者小黑子@QQ2990172005
+            # 3. 使用 objcopy 修改版本符号
+            TARGET_VERSION="v3.17-作者小黑子@QQ2990172005"
+            TEMP_SYM=".tmp_version_sym"
             
-            # 确保新字符串长度不超过原始长度
-            if [ ${#HEX_NEW} -le ${#HEX_OLD} ]; then
-                # 填充新字符串到相同长度
-                PADDED_HEX_NEW=$(printf "%-${#HEX_OLD}s" "$HEX_NEW" | tr ' ' '0')
-                
-                # 使用sed进行二进制替换
-                sed -i "s/\x$HEX_OLD/\x$PADDED_HEX_NEW/g" "$MODULE_PATH"
-                
-                # 验证修改
-                if hexdump -C "$MODULE_PATH" | grep -q "$PADDED_HEX_NEW"; then
-                    echo "[+] KernelSU version patched successfully"
-                else
-                    echo "[!] Patching failed, restoring backup"
-                    mv "${MODULE_PATH}.bak" "$MODULE_PATH"
-                fi
-            else
-                echo "[!] New version string too long, cannot patch"
-            fi
+            # 创建临时符号文件
+            echo "__version ${TARGET_VERSION}" > ${TEMP_SYM}
+            
+            # 添加新版本符号
+            aarch64-linux-gnu-objcopy --add-symbol ${TEMP_SYM} "${MODULE_PATH}"
+            
+            # 删除旧版本符号
+            aarch64-linux-gnu-objcopy --strip-symbol __module_version "${MODULE_PATH}"
+            aarch64-linux-gnu-objcopy --strip-symbol __mod_ver "${MODULE_PATH}"
+            
+            # 重命名新符号
+            aarch64-linux-gnu-objcopy --redefine-sym ${TEMP_SYM}=__module_version "${MODULE_PATH}"
+            
+            # 清理临时文件
+            rm -f ${TEMP_SYM}
+            
+            echo "[+] KernelSU version modified to: ${TARGET_VERSION}"
         else
-            echo "[!] kernelsu.ko not found, cannot patch version"
+            echo "[!] Error: kernelsu.ko not found, cannot modify version"
         fi
     fi
 
