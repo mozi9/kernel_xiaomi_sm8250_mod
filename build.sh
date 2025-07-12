@@ -132,10 +132,6 @@ elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-    if [ -f "KernelSU/version.h" ]; then
-        sed -i 's/v3.1.7-0b03cd9f@susfs-main/v3.1.7-作者小黑子@QQ2990172005/g' KernelSU/version.h
-    fi
-
 elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
@@ -374,6 +370,19 @@ Image_Repack(){
     mkdir -p anykernel/kernels/
 
     cp out/arch/arm64/boot/Image anykernel/kernels/
+    OLD_STR="v3.1.7-0b03cd9f@susfs-main"
+    NEW_STR="v3.1.7-作者小黑子@QQ2990172005"
+    if [ -f "anykernel/kernels/Image" ]; then
+        echo "正在修改内核镜像中的版本信息: [$OLD_STR] => [$NEW_STR]"
+        OLD_HEX=$(echo -n "$OLD_STR" | xxd -p | tr -d '\n')
+        NEW_HEX=$(echo -n "$NEW_STR" | xxd -p | tr -d '\n')
+        xxd -p anykernel/kernels/Image | tr -d '\n' | sed "s/$OLD_HEX/$NEW_HEX/g" | xxd -r -p > anykernel/kernels/Image.tmp
+        mv anykernel/kernels/Image.tmp anykernel/kernels/Image
+    else
+        echo "错误：未找到内核镜像文件，无法修改版本信息"
+        exit 1
+    fi
+    
     cp out/arch/arm64/boot/dtb anykernel/kernels/
 
     cd anykernel 
@@ -418,3 +427,8 @@ else
 fi
     
 echo "Done. The flashable zip is: [./$ZIP_FILENAME]"
+
+OLD_STR="v3.1.7-0b03cd9f@susfs-main"
+NEW_STR="v3.1.7-作者小黑子@QQ2990172005"
+echo "正在修改刷机包中的版本信息..."
+find anykernel/ -type f ! -name "Image" -exec sed -i "s/$OLD_STR/$NEW_STR/g" {} +
