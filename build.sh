@@ -133,24 +133,10 @@ elif [[ "$KSU_VERSION" == "sukisu-ultra" && "$SuSFS_ENABLE" -eq 1 ]]; then
     KSU_ZIP_STR="SukiSU-Ultra"
     echo "SukiSU-Ultra && SuSFS is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-    KSU_VER_FILE="drivers/kernelsu/include/linux/version.h"
-    if [ -f "$KSU_VER_FILE" ]; then
-        echo "修改SukiSU-Ultra版本显示为: v3.17-作者小黑子@QQ2990172005"
-        sed -i 's/#define KSU_VERSION .*/#define KSU_VERSION "v3.17-作者小黑子@QQ2990172005"/' "$KSU_VER_FILE"
-    else
-        echo "警告: 未找到版本文件 $KSU_VER_FILE, 跳过版本修改"
-    fi
 elif [ "$KSU_VERSION" == "sukisu-ultra" ]; then
     KSU_ZIP_STR=SukiSU-Ultra
     echo "SukiSU-Ultra is enabled"
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
-    KSU_VER_FILE="drivers/kernelsu/include/linux/version.h"
-    if [ -f "$KSU_VER_FILE" ]; then
-        echo "修改SukiSU-Ultra版本显示为: v3.17-作者小黑子@QQ2990172005"
-        sed -i 's/#define KSU_VERSION .*/#define KSU_VERSION "v3.17-作者小黑子@QQ2990172005"/' "$KSU_VER_FILE"
-    else
-        echo "警告: 未找到版本文件 $KSU_VER_FILE, 跳过版本修改"
-    fi
 else
     KSU_ZIP_STR=NoKernelSU
     echo "KSU is disabled"
